@@ -307,22 +307,39 @@ void handle_instruction()
 {
 	/*IMPLEMENT THIS*/
 	/* execute one instruction at a time. Use/update CURRENT_STATE and and NEXT_STATE, as necessary.*/
-	uint32_t instruction = mem_read_32(CURRENT_STATE.PC);
+	uint32_t instruction;
+	instruction = mem_read_32(CURRENT_STATE.PC);
 
-	printf("\n\ninstruction:  ");
+	NEXT_STATE = CURRENT_STATE;
+
+	//printf("%d",CURRENT_STATE.PC);
+
+	/*printf("\n\ninstruction:  ");
 	printf("%x",instruction);
-	printf("\n");
+	printf("\n");*/
 
-	uint32_t opcode = instruction & 0xFC000000;
+	r_type_data	data_r = parse_r_type(instruction);
+	i_type_data data_i = parse_i_type(instruction);
+	j_type_data data_j = parse_j_type(instruction);
 
-	printf("\n\nopcode:  ");
+	uint32_t opcode;
+	opcode = instruction & 0xFC000000;
+
+	/*printf("\n\nopcode:  ");
 	printf("%x",opcode);
-	printf("\n\n");
+	printf("\n\n");*/
 
 	switch(opcode) {
-		case 0x00000000: // RType
+		case 0x00000000:
+		    ;// RType
 			//Handle rtypes
-			uint32_t func = instruction & 0x0000003F;
+			uint32_t func;
+			func = instruction & 0x0000003F;
+
+			printf("\nrs: %x",data_r.rs);
+			printf("\nrt: %x",data_r.rt);
+			printf("\nrd: %x",data_r.rd);
+			printf("\nshamt: %x",data_r.shamt);
 
 			switch(func) {
 				case 0x00000010: // MFHI
@@ -374,19 +391,62 @@ void handle_instruction()
 
 					break;
 				case 0x00000020: // ADD
+					printf("\nADD");
+					NEXT_STATE.REGS[data_r.rd] = CURRENT_STATE.REGS[data_r.rs] + CURRENT_STATE.REGS[data_r.rt];
+					break;
+				case 0x00000021: // ADDU
+					NEXT_STATE.REGS[data_r.rd] = CURRENT_STATE.REGS[data_r.rs] + CURRENT_STATE.REGS[data_r.rt];
+					break;
+				case 0x00000024: // AND
 
+					break;
+				case 0x0000001A: // DIV
+
+					break;
+				case 0x0000001B: // DIVU
+
+					break;
+				case 0x00000009: // JALR
+
+					break;
+				case 0x00000008: // JR
+
+					break;
+				default:
+					printf("\n\nUnknown instruction in R type.\n\n");
+					break;
+			}
+			break;
+
+		case 0x04000000: // BGEZ & BLTZ
+			;
+			uint32_t rt;
+			rt = instruction & 0x001F0000;
+
+			switch(rt) {
+				case 0x00010000: // BGEZ
+
+					break;
+				case 0x00000000: // BLTZ
+
+					break;
+				default:
+					printf("\n\nUnknown instruction in B case.\n\n");
 					break;
 			}
 			break;
 
 		case 0x3C000000: // LUI
-			
+			;//parse i type
+			printf("\nLUI");
+			NEXT_STATE.REGS[data_i.rt] = data_i.immediate * 0x10000;
 			break;
 		case 0x84000000: // LH
 
 			break;
 		case 0x8C000000: // LW
-
+			;
+			NEXT_STATE.REGS[data_i.rs] = data_i.immediate;
 			break;
 		case 0x34000000: // ORI
 
@@ -409,11 +469,74 @@ void handle_instruction()
 		case 0x20000000: // ADDI
 
 			break;
-		case 0x21000000: // ADDIU
+		case 0x24000000: // ADDIU
 
 			break;
-		
+		case 0x30000000: // ANDI
+
+			break;
+		case 0x10000000: // BEQ
+
+			break;
+		case 0x1C000000: // BGTZ
+
+			break;
+		case 0x18000000: // BLEZ
+
+			break;
+		case 0x14000000: // BNE
+
+			break;
+		case 0x08000000: // J
+
+			break;
+		case 0x0C000000: // JAL
+
+			break;
+		case 0x80000000: // LB
+
+			break;
+		default:
+			printf("\n\nUnknown instruction in other case.\n\n");
+			break;		
 	}	
+
+	NEXT_STATE.PC = CURRENT_STATE.PC + 4;
+
+	CURRENT_STATE = NEXT_STATE;
+}
+
+/************************************************************/
+/* Parses instruction into data struct for R-type instr                                                                                                  */ 
+/************************************************************/
+r_type_data parse_r_type(uint32_t instr) {
+	r_type_data data;
+	data.rs 	= (instr & 0x03E00000) / 0x200000;
+	data.rt 	= (instr & 0x001F0000) / 0x10000;
+	data.rd 	= (instr & 0x0000F800) / 0x800;
+	data.shamt 	= (instr & 0x000007E0) / 0x40;
+	return data;
+}
+
+
+/************************************************************/
+/* Parses instruction into data struct for I-type instr                                                                                                  */ 
+/************************************************************/
+i_type_data parse_i_type(uint32_t instr) {
+	i_type_data data;
+	data.rs 		= (instr & 0x03E00000) / 0x200000;
+	data.rt 		= (instr & 0x001F0000) / 0x10000;
+	data.immediate 	= (instr & 0x0000F800);
+	return data;
+}
+
+/************************************************************/
+/* Parses instruction into data struct for J-type instr                                                                                                  */ 
+/************************************************************/
+j_type_data parse_j_type(uint32_t instr) {
+	j_type_data data;
+	data.target	= (instr & 0x03E00000);
+	return data;
 }
 
 
