@@ -40,12 +40,10 @@ mem_region_t MEM_REGIONS[] = {
 
 
 typedef struct CPU_State_Struct {
-
   uint32_t PC;		                   	/* program counter */
   uint32_t REGS[MIPS_REGS]; 			/* register file. */
   uint32_t HI, LO;                      /* special regs for mult/div. */
 } CPU_State;
-
 
 typedef struct R_Type_Instruction {
 	uint32_t rs;
@@ -99,3 +97,4 @@ void print_instruction(uint32_t);
 r_type_data parse_r_type(uint32_t);
 i_type_data parse_i_type(uint32_t);
 j_type_data parse_j_type(uint32_t);
+uint32_t sign_extend(uint32_t);

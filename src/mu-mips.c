@@ -323,6 +323,8 @@ void handle_instruction()
 	j_type_data data_j = parse_j_type(instruction);
 
 	uint32_t opcode;
+	uint32_t msb;
+	int jump = 0;
 	opcode = instruction & 0xFC000000;
 
 	/*printf("\n\nopcode:  ");
@@ -398,19 +400,32 @@ void handle_instruction()
 					NEXT_STATE.REGS[data_r.rd] = CURRENT_STATE.REGS[data_r.rs] + CURRENT_STATE.REGS[data_r.rt];
 					break;
 				case 0x00000024: // AND
-
+					NEXT_STATE.REGS[data_r.rd] = CURRENT_STATE.REGS[data_r.rs] & CURRENT_STATE.REGS[data_r.rt];
 					break;
 				case 0x0000001A: // DIV
-
+					if(CURRENT_STATE.REGS[data_r.rt] == 0) {
+						//undefined
+					} else {
+						NEXT_STATE.LO = CURRENT_STATE.REGS[data_r.rs] / CURRENT_STATE.REGS[data_r.rt];
+						NEXT_STATE.HI = CURRENT_STATE.REGS[data_r.rs] % CURRENT_STATE.REGS[data_r.rt];
+					}
 					break;
 				case 0x0000001B: // DIVU
-
+					if(CURRENT_STATE.REGS[data_r.rt] == 0) {
+						//undefined
+					} else {
+						NEXT_STATE.LO = CURRENT_STATE.REGS[data_r.rs] / CURRENT_STATE.REGS[data_r.rt];
+						NEXT_STATE.HI = CURRENT_STATE.REGS[data_r.rs] % CURRENT_STATE.REGS[data_r.rt];
+					}
 					break;
 				case 0x00000009: // JALR
-
+					NEXT_STATE.REGS[data_r.rd] = CURRENT_STATE.PC + 0x8;
+					NEXT_STATE.PC = CURRENT_STATE.REGS[data_r.rs];
+					jump = 1;
 					break;
 				case 0x00000008: // JR
-
+					NEXT_STATE.PC = CURRENT_STATE.REGS[data_r.rs];
+					jump = 1;
 					break;
 				default:
 					printf("\n\nUnknown instruction in R type.\n\n");
@@ -425,10 +440,18 @@ void handle_instruction()
 
 			switch(rt) {
 				case 0x00010000: // BGEZ
-
+					msb = (CURRENT_STATE.REGS[data_i.rs] & 0x80000000) / 0x80000000;
+					if(msb == 0) {
+						NEXT_STATE.PC = CURRENT_STATE.PC + sign_extend(CURRENT_STATE.REGS[data_i.immediate] * 0x4);
+						jump = 1;
+					}	
 					break;
 				case 0x00000000: // BLTZ
-
+					msb = (CURRENT_STATE.REGS[data_i.rs] & 0x80000000) / 0x80000000;
+					if(msb == 1) {
+						NEXT_STATE.PC = CURRENT_STATE.PC + sign_extend(CURRENT_STATE.REGS[data_i.immediate] * 0x4);
+						jump = 1;
+					}					
 					break;
 				default:
 					printf("\n\nUnknown instruction in B case.\n\n");
@@ -467,41 +490,60 @@ void handle_instruction()
 
 			break;
 		case 0x20000000: // ADDI
-
+			NEXT_STATE.REGS[data_i.rt] = CURRENT_STATE.REGS[data_i.immediate] + CURRENT_STATE.REGS[data_i.rs];
 			break;
 		case 0x24000000: // ADDIU
 
 			break;
 		case 0x30000000: // ANDI
-
+			NEXT_STATE.REGS[data_i.rt] = CURRENT_STATE.REGS[data_i.rs] & CURRENT_STATE.REGS[data_i.immediate];
 			break;
 		case 0x10000000: // BEQ
-
+			if(CURRENT_STATE.REGS[data_i.rs] == CURRENT_STATE.REGS[data_i.rt]) {
+				NEXT_STATE.PC = CURRENT_STATE.PC + sign_extend(CURRENT_STATE.REGS[data_i.immediate] * 0x4);
+				jump = 1;
+			}			
 			break;
 		case 0x1C000000: // BGTZ
-
+			msb = (CURRENT_STATE.REGS[data_i.rs] & 0x80000000) / 0x80000000;
+			if(msb == 0 || CURRENT_STATE.REGS[data_i.rs] != 0) {
+				NEXT_STATE.PC = CURRENT_STATE.PC + sign_extend(CURRENT_STATE.REGS[data_i.immediate] * 0x4);
+				jump = 1;
+			}
 			break;
 		case 0x18000000: // BLEZ
-
+			msb = (CURRENT_STATE.REGS[data_i.rs] & 0x80000000) / 0x80000000;
+			if(msb == 1 || CURRENT_STATE.REGS[data_i.rs] == 0) {
+				NEXT_STATE.PC = CURRENT_STATE.PC + sign_extend(CURRENT_STATE.REGS[data_i.immediate] * 0x4);
+				jump = 1;
+			}
 			break;
 		case 0x14000000: // BNE
-
+			if(CURRENT_STATE.REGS[data_i.rs] != CURRENT_STATE.REGS[data_i.rt]) {
+				NEXT_STATE.PC = CURRENT_STATE.PC + sign_extend(CURRENT_STATE.REGS[data_i.immediate] * 0x4);
+				jump = 1;
+			}
 			break;
 		case 0x08000000: // J
-
+			NEXT_STATE.PC = (CURRENT_STATE.PC & 0xF0000000) + (CURRENT_STATE.REGS[data_j.target] * 0x4);
+			jump = 1;
 			break;
 		case 0x0C000000: // JAL
-
+			NEXT_STATE.REGS[31] = CURRENT_STATE.PC + 0x8;
+			NEXT_STATE.PC = (CURRENT_STATE.PC & 0xF0000000) + (CURRENT_STATE.REGS[data_j.target] * 0x4);
+			jump = 1;
 			break;
 		case 0x80000000: // LB
-
+			NEXT_STATE.REGS[data_r.rt] = mem_read_32(sign_extend(CURRENT_STATE.REGS[data_i.immediate]) + CURRENT_STATE.REGS[data_i.rs]);
 			break;
 		default:
 			printf("\n\nUnknown instruction in other case.\n\n");
 			break;		
 	}	
 
-	NEXT_STATE.PC = CURRENT_STATE.PC + 4;
+	if(!jump) {
+		NEXT_STATE.PC = CURRENT_STATE.PC + 4;
+	}
 
 	CURRENT_STATE = NEXT_STATE;
 }
@@ -537,6 +579,19 @@ j_type_data parse_j_type(uint32_t instr) {
 	j_type_data data;
 	data.target	= (instr & 0x03E00000);
 	return data;
+}
+
+/************************************************************/
+/* Parses instruction into data struct for J-type instr                                                                                                  */ 
+/************************************************************/
+uint32_t sign_extend(uint32_t instr) {
+	uint32_t extend_bit = (instr & 0x8000) / 0x8000;
+	if(extend_bit == 0x1) {
+		instr = instr | 0xFFFF0000;
+	} else {
+		instr = instr & 0x0000FFFF;
+	}
+	return instr;
 }
 
 
