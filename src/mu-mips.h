@@ -97,4 +97,4 @@ void print_instruction(uint32_t);
 r_type_data parse_r_type(uint32_t);
 i_type_data parse_i_type(uint32_t);
 j_type_data parse_j_type(uint32_t);
-uint32_t sign_extend(uint32_t);
+uint32_t sign_extend(uint32_t,int);
