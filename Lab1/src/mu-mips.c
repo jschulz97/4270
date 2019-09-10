@@ -388,10 +388,11 @@ void handle_instruction()
 					NEXT_STATE.REGS[data_r.rd] = CURRENT_STATE.REGS[data_r.rt] >> data_r.shamt;
 					break;
 				case 0x00000022: // SUB
-					NEXT_STATE.REGS[data_r.rd] = CURRENT_STATE.REGS[data_r.rt] - CURRENT_STATE.REGS[data_r.rs];
+					NEXT_STATE.REGS[data_r.rd] = CURRENT_STATE.REGS[data_r.rs] - CURRENT_STATE.REGS[data_r.rt];
 					break;
 				case 0x00000023: // SUBU
-					NEXT_STATE.REGS[data_r.rd] = CURRENT_STATE.REGS[data_r.rt] - CURRENT_STATE.REGS[data_r.rs];
+					//if(CURRENT_STATE.REGS[data_r.rt] > CURRENT_STATE.REGS[data_r.rs])
+					NEXT_STATE.REGS[data_r.rd] = CURRENT_STATE.REGS[data_r.rs] - CURRENT_STATE.REGS[data_r.rt];
 					break;
 				case 0x0000000C: //SYSCALL
 					if(CURRENT_STATE.REGS[0x2] == 0xA) {

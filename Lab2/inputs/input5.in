@@ -1,0 +1,8 @@
+addiu R4, R0, 0
+addiu R5, R0, 0xA
+addiu R6, R0, 0
+addiu R4, R4, 0x1
+addiu R6, R6, 0x1
+bne R5, R6, -8
+addiu R2, R0, 0xA
+syscall
