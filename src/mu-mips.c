@@ -371,7 +371,7 @@ void handle_instruction()
 					NEXT_STATE.REGS[data_r.rd] = CURRENT_STATE.REGS[data_r.rs] | CURRENT_STATE.REGS[data_r.rt];
 					break;
 				case 0x00000000: // SLL
-					NEXT_STATE.REGS[data_r.rd] = CURRENT_STATE.REGS[data_r.rt] << CURRENT_STATE.REGS[data_r.shamt];
+					NEXT_STATE.REGS[data_r.rd] = CURRENT_STATE.REGS[data_r.rt] << data_r.shamt;
 					break;
 				case 0x0000002A: // SLT
 					if(CURRENT_STATE.REGS[data_r.rs] < CURRENT_STATE.REGS[data_r.rt]) {
@@ -382,10 +382,10 @@ void handle_instruction()
 					NEXT_STATE.REGS[data_r.rd] = temp;
 					break;
 				case 0x00000003: // SRA  - Sign extending????
-					NEXT_STATE.REGS[data_r.rd] = CURRENT_STATE.REGS[data_r.rt] >> CURRENT_STATE.REGS[data_r.shamt];
+					NEXT_STATE.REGS[data_r.rd] = CURRENT_STATE.REGS[data_r.rt] / pow(2,data_r.shamt);
 					break;
 				case 0x00000002: // SRL
-					NEXT_STATE.REGS[data_r.rd] = CURRENT_STATE.REGS[data_r.rt] >> CURRENT_STATE.REGS[data_r.shamt];
+					NEXT_STATE.REGS[data_r.rd] = CURRENT_STATE.REGS[data_r.rt] >> data_r.shamt;
 					break;
 				case 0x00000022: // SUB
 					NEXT_STATE.REGS[data_r.rd] = CURRENT_STATE.REGS[data_r.rt] - CURRENT_STATE.REGS[data_r.rs];
@@ -450,14 +450,14 @@ void handle_instruction()
 				case 0x00010000: // BGEZ
 					msb = (CURRENT_STATE.REGS[data_i.rs] & 0x80000000) / 0x80000000;
 					if(msb == 0) {
-						NEXT_STATE.PC = CURRENT_STATE.PC + sign_extend(CURRENT_STATE.REGS[data_i.immediate] * 0x4,16);
+						NEXT_STATE.PC = CURRENT_STATE.PC + sign_extend(data_i.immediate * 0x4,16);
 						jump = 1;
 					}
 					break;
 				case 0x00000000: // BLTZ
 					msb = (CURRENT_STATE.REGS[data_i.rs] & 0x80000000) / 0x80000000;
 					if(msb == 1) {
-						NEXT_STATE.PC = CURRENT_STATE.PC + sign_extend(CURRENT_STATE.REGS[data_i.immediate] * 0x4,16);
+						NEXT_STATE.PC = CURRENT_STATE.PC + sign_extend(data_i.immediate * 0x4,16);
 						jump = 1;
 					}
 					break;
@@ -472,25 +472,25 @@ void handle_instruction()
 			NEXT_STATE.REGS[data_i.rt] = data_i.immediate * 0x10000;
 			break;
 		case 0x84000000: // LH
-			temp = mem_read_32(sign_extend(CURRENT_STATE.REGS[data_i.immediate],16) + CURRENT_STATE.REGS[data_i.rs]);
+			temp = mem_read_32(sign_extend(data_i.immediate,16) + CURRENT_STATE.REGS[data_i.rs]);
 			NEXT_STATE.REGS[data_i.rt] = sign_extend(temp,16);
 			break;
 		case 0x8C000000: // LW
-			NEXT_STATE.REGS[data_i.rt] = mem_read_32(sign_extend(CURRENT_STATE.REGS[data_i.immediate],16) + CURRENT_STATE.REGS[data_i.rs]);
+			NEXT_STATE.REGS[data_i.rt] = mem_read_32(sign_extend(data_i.immediate,16) + CURRENT_STATE.REGS[data_i.rs]);
 			break;
 		case 0x34000000: // ORI
-			NEXT_STATE.REGS[data_i.rt] = CURRENT_STATE.REGS[data_i.rs] | CURRENT_STATE.REGS[data_i.immediate];
+			NEXT_STATE.REGS[data_i.rt] = CURRENT_STATE.REGS[data_i.rs] | data_i.immediate;
 			break;
 		case 0xA0000000: // SB
-			temp = sign_extend(CURRENT_STATE.REGS[data_i.immediate], 16) + CURRENT_STATE.REGS[data_i.rs];
+			temp = sign_extend(data_i.immediate, 16) + CURRENT_STATE.REGS[data_i.rs];
 			mem_write_32(temp,CURRENT_STATE.REGS[data_i.rt] & 0xFF);
 			break;
 		case 0xA4000000: // SH
-			temp = sign_extend(CURRENT_STATE.REGS[data_i.immediate], 16) + CURRENT_STATE.REGS[data_i.rs];
+			temp = sign_extend(data_i.immediate, 16) + CURRENT_STATE.REGS[data_i.rs];
 			mem_write_32(temp,CURRENT_STATE.REGS[data_i.rt] & 0xFFFF);
 			break;
 		case 0x28000000: // SLTI
-			if(CURRENT_STATE.REGS[data_i.rs] < sign_extend(CURRENT_STATE.REGS[data_i.immediate], 16)) {
+			if(CURRENT_STATE.REGS[data_i.rs] < sign_extend(data_i.immediate, 16)) {
 				temp = 1;
 			} else {
 				temp = 0;
@@ -502,10 +502,10 @@ void handle_instruction()
 			mem_write_32(temp,CURRENT_STATE.REGS[data_i.rt]);
 			break;
 		case 0x38000000: // XORI
-			NEXT_STATE.REGS[data_i.rt] = CURRENT_STATE.REGS[data_i.rs] ^ CURRENT_STATE.REGS[data_i.immediate];
+			NEXT_STATE.REGS[data_i.rt] = CURRENT_STATE.REGS[data_i.rs] ^ data_i.immediate;
 			break;
 		case 0x20000000: // ADDI
-			NEXT_STATE.REGS[data_i.rt] = sign_extend(CURRENT_STATE.REGS[data_i.immediate],16) + CURRENT_STATE.REGS[data_i.rs];
+			NEXT_STATE.REGS[data_i.rt] = sign_extend(data_i.immediate,16) + CURRENT_STATE.REGS[data_i.rs];
 			break;
 		case 0x24000000: // ADDIU
 			//printf("%x\n",data_i.immediate );
@@ -514,36 +514,36 @@ void handle_instruction()
 			NEXT_STATE.REGS[data_i.rt] = sign_extend(data_i.immediate,16) + CURRENT_STATE.REGS[data_i.rs];
 			break;
 		case 0x30000000: // ANDI
-			NEXT_STATE.REGS[data_i.rt] = CURRENT_STATE.REGS[data_i.rs] & CURRENT_STATE.REGS[data_i.immediate];
+			NEXT_STATE.REGS[data_i.rt] = CURRENT_STATE.REGS[data_i.rs] & data_i.immediate;
 			break;
 		case 0x10000000: // BEQ
 			if(CURRENT_STATE.REGS[data_i.rs] == CURRENT_STATE.REGS[data_i.rt]) {
-				NEXT_STATE.PC = CURRENT_STATE.PC + sign_extend(CURRENT_STATE.REGS[data_i.immediate] * 0x4,16);
+				NEXT_STATE.PC = CURRENT_STATE.PC + sign_extend(data_i.immediate * 0x4,16);
 				jump = 1;
 			}			
 			break;
 		case 0x1C000000: // BGTZ
 			msb = (CURRENT_STATE.REGS[data_i.rs] & 0x80000000) / 0x80000000;
 			if(msb == 0 || CURRENT_STATE.REGS[data_i.rs] != 0) {
-				NEXT_STATE.PC = CURRENT_STATE.PC + sign_extend(CURRENT_STATE.REGS[data_i.immediate] * 0x4,16);
+				NEXT_STATE.PC = CURRENT_STATE.PC + sign_extend(data_i.immediate * 0x4,16);
 				jump = 1;
 			}
 			break;
 		case 0x18000000: // BLEZ
 			msb = (CURRENT_STATE.REGS[data_i.rs] & 0x80000000) / 0x80000000;
 			if(msb == 1 || CURRENT_STATE.REGS[data_i.rs] == 0) {
-				NEXT_STATE.PC = CURRENT_STATE.PC + sign_extend(CURRENT_STATE.REGS[data_i.immediate] * 0x4,16);
+				NEXT_STATE.PC = CURRENT_STATE.PC + sign_extend(data_i.immediate * 0x4,16);
 				jump = 1;
 			}
 			break;
 		case 0x14000000: // BNE
 			if(CURRENT_STATE.REGS[data_i.rs] != CURRENT_STATE.REGS[data_i.rt]) {
-				NEXT_STATE.PC = CURRENT_STATE.PC + sign_extend(CURRENT_STATE.REGS[data_i.immediate] * 0x4,16);
+				NEXT_STATE.PC = CURRENT_STATE.PC + sign_extend(data_i.immediate * 0x4,16);
 				jump = 1;
 			}
 			break;
 		case 0x08000000: // J
-			NEXT_STATE.PC = (CURRENT_STATE.PC & 0xF0000000) + (CURRENT_STATE.REGS[data_j.target] * 0x4);
+			NEXT_STATE.PC = (CURRENT_STATE.PC & 0xF0000000) + (data_j.target * 0x4);
 			jump = 1;
 			break;
 		case 0x0C000000: // JAL
@@ -552,7 +552,7 @@ void handle_instruction()
 			jump = 1;
 			break;
 		case 0x80000000: // LB
-			temp = mem_read_32(sign_extend(CURRENT_STATE.REGS[data_i.immediate],16) + CURRENT_STATE.REGS[data_i.rs]);
+			temp = mem_read_32(sign_extend(data_i.immediate,16) + CURRENT_STATE.REGS[data_i.rs]);
 			NEXT_STATE.REGS[data_i.rt] = sign_extend(temp,24);
 			break;
 		default:
@@ -598,7 +598,7 @@ i_type_data parse_i_type(uint32_t instr) {
 /************************************************************/
 j_type_data parse_j_type(uint32_t instr) {
 	j_type_data data;
-	data.target	= (instr & 0x03E00000);
+	data.target	= (instr & 0x03FFFFFF);
 	return data;
 }
 
@@ -775,25 +775,25 @@ void print_instruction(uint32_t addr){
 			printf("LUI R%d %d\n",data_i.rt,data_i.immediate);
 			break;
 		case 0x84000000: // LH
-			printf("LH R%d %d Rbase:%d\n",data_i.rt,data_i.immediate,data_i.rs);
+			printf("LH R%d %d(R%d)\n",data_i.rt,data_i.immediate,data_i.rs);
 			break;
 		case 0x8C000000: // LW
-			printf("LW R%d %d Rbase:%d\n",data_i.rt,data_i.immediate,data_i.rs);
+			printf("LW R%d %d(R%d)\n",data_i.rt,data_i.immediate,data_i.rs);
 			break;
 		case 0x34000000: // ORI
 			printf("ORI R%d R%d %d\n",data_i.rt,data_i.rs,data_i.immediate);
 			break;
 		case 0xA0000000: // SB
-			printf("SB R%d %d Rbase:%d\n",data_i.rt,data_i.immediate,data_i.rs);
+			printf("SB R%d %d(R%d)\n",data_i.rt,data_i.immediate,data_i.rs);
 			break;
 		case 0xA4000000: // SH
-			printf("SH R%d %d Rbase:%d\n",data_i.rt,data_i.immediate,data_i.rs);
+			printf("SH R%d %d(R%d)\n",data_i.rt,data_i.immediate,data_i.rs);
 			break;
 		case 0x28000000: // SLTI
 			printf("SLTI R%d R%d %d\n",data_i.rt,data_i.rs,data_i.immediate);
 			break;
 		case 0xAC000000: // SW
-			printf("SW R%d %d Rbase:%d\n",data_i.rt,data_i.immediate,data_i.rs);
+			printf("SW R%d %d(R%d)\n",data_i.rt,data_i.immediate,data_i.rs);
 			break;
 		case 0x38000000: // XORI
 			printf("XORI R%d R%d %d\n",data_i.rt,data_i.rs,data_i.immediate);
@@ -826,7 +826,7 @@ void print_instruction(uint32_t addr){
 			printf("JAL %d\n",data_j.target);
 			break;
 		case 0x80000000: // LB
-			printf("LB R%d %d Rbase:%d\n",data_i.rt,data_i.immediate,data_i.rs);
+			printf("LB R%d %d(R%d)\n",data_i.rt,data_i.immediate,data_i.rs);
 			break;
 		default:
 			printf("\n\nUnknown instruction in other case.\n\n");
