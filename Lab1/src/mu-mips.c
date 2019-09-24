@@ -450,14 +450,14 @@ void handle_instruction()
 			switch(rt) {
 				case 0x00010000: // BGEZ
 					msb = (CURRENT_STATE.REGS[data_i.rs] & 0x80000000) / 0x80000000;
-					if(msb == 0) {
+					if(CURRENT_STATE.REGS[data_i.rs] >= 0) {
 						NEXT_STATE.PC = CURRENT_STATE.PC + sign_extend(data_i.immediate * 0x4,16);
 						jump = 1;
 					}
 					break;
 				case 0x00000000: // BLTZ
 					msb = (CURRENT_STATE.REGS[data_i.rs] & 0x80000000) / 0x80000000;
-					if(msb == 1) {
+					if(CURRENT_STATE.REGS[data_i.rs] < 0) {
 						NEXT_STATE.PC = CURRENT_STATE.PC + sign_extend(data_i.immediate * 0x4,16);
 						jump = 1;
 					}
@@ -525,14 +525,14 @@ void handle_instruction()
 			break;
 		case 0x1C000000: // BGTZ
 			msb = (CURRENT_STATE.REGS[data_i.rs] & 0x80000000) / 0x80000000;
-			if(msb == 0 || CURRENT_STATE.REGS[data_i.rs] != 0) {
+			if(CURRENT_STATE.REGS[data_i.rs] > 0) {
 				NEXT_STATE.PC = CURRENT_STATE.PC + sign_extend(data_i.immediate * 0x4,16);
 				jump = 1;
 			}
 			break;
 		case 0x18000000: // BLEZ
 			msb = (CURRENT_STATE.REGS[data_i.rs] & 0x80000000) / 0x80000000;
-			if(msb == 1 || CURRENT_STATE.REGS[data_i.rs] == 0) {
+			if(CURRENT_STATE.REGS[data_i.rs] <= 0) {
 				NEXT_STATE.PC = CURRENT_STATE.PC + sign_extend(data_i.immediate * 0x4,16);
 				jump = 1;
 			}

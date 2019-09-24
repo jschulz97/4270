@@ -1,1 +1,8 @@
-sb r5, 0x08(R10)
+addiu r4, r0, 0x0
+addiu r5, r0, 0xa
+addiu r6, r0, 0x0
+addiu r4, r4, 0x1
+addiu r6, r6, 0x1
+bne r5, r6, -0x8
+addiu r2, r0, 0xa
+syscall 

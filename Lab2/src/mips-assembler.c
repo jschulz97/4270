@@ -41,7 +41,6 @@ void handle_instruction(char* instr) {
 	uint32_t code = 0; 
 
 	opcode = to_lower(opcode);
-	//printf("\n%s %s %s %s",opcode,params[0],params[1],params[2]);
 
 	// I Type
 	if(!strncmp(opcode,"addiu",5)) {
@@ -227,8 +226,11 @@ void handle_instruction(char* instr) {
 	else if(!strncmp(opcode,"lb",2)) {
 		dim = 2;
 		op = 0x20;
-		parse_params(params,dim);
-		i_type_data data = parse_registers_i_2(params);
+		parse_params_s(params,dim);
+		i_type_data data;
+		data.rt 		= get_int_dec(params[0],1);
+		data.immediate	= get_int(params[1],2);
+		data.rs		 	= get_int_dec(params[2],1);
 		code = create_mach_code_i(data,op);
 		output_instr(code);
 
@@ -237,8 +239,11 @@ void handle_instruction(char* instr) {
 	else if(!strncmp(opcode,"lh",2)) {
 		dim = 2;
 		op = 0x21;
-		parse_params(params,dim);
-		i_type_data data = parse_registers_i_2(params);
+		parse_params_s(params,dim);
+		i_type_data data;
+		data.rt 		= get_int_dec(params[0],1);
+		data.immediate	= get_int(params[1],2);
+		data.rs		 	= get_int_dec(params[2],1);
 		code = create_mach_code_i(data,op);
 		output_instr(code);
 
@@ -248,7 +253,10 @@ void handle_instruction(char* instr) {
 		dim = 2;
 		op = 0x0f;
 		parse_params(params,dim);
-		i_type_data data = parse_registers_i_2(params);
+		i_type_data data;
+		data.rs 		= 0;
+		data.immediate 	= get_int(params[1],2);
+		data.rt 		= get_int_dec(params[0],1);
 		code = create_mach_code_i(data,op);
 		output_instr(code);
 
@@ -257,8 +265,11 @@ void handle_instruction(char* instr) {
 	else if(!strncmp(opcode,"lw",2)) {
 		dim = 2;
 		op = 0x23;
-		parse_params(params,dim);
-		i_type_data data = parse_registers_i_2(params);
+		parse_params_s(params,dim);
+		i_type_data data;
+		data.rt 		= get_int_dec(params[0],1);
+		data.immediate	= get_int(params[1],2);
+		data.rs		 	= get_int_dec(params[2],1);
 		code = create_mach_code_i(data,op);
 		output_instr(code);
 
@@ -370,7 +381,6 @@ void handle_instruction(char* instr) {
 		data.rt 		= get_int_dec(params[0],1);
 		data.immediate	= get_int(params[1],2);
 		data.rs		 	= get_int_dec(params[2],1);
-		printf("%s %x %s %x %s %x",params[0],data.rt,params[1],data.immediate,params[2],data.rs);
 		code = create_mach_code_i(data,op);
 		output_instr(code);
 
@@ -472,8 +482,7 @@ void handle_instruction(char* instr) {
 
 	} 
 	// R Type - SYSCALL
-	else if(!strncmp(opcode,"SYSCALL",6)) {
-		dim = 3;
+	else if(!strncmp(opcode,"syscall",7)) {
 		op = 0xc;
 		output_instr(op);
 
@@ -492,7 +501,6 @@ uint32_t create_mach_code_i(i_type_data data, uint32_t op) {
 	uint32_t instr = 0;
 	instr = instr + op 		* 0x4000000;
 	instr = instr + data.rs * 0x200000;
-	printf("\n%x %x", (data.rs * 0x200000),instr);
 	instr = instr + data.rt * 0x10000;
 	instr = instr + data.immediate; 
 	return instr;
@@ -691,7 +699,7 @@ int get_int_dec(char* str,int offset) {
 		offset++;
 		i++;
 	}
-	return strtol(temp,NULL,10);
+	return strtol(temp,NULL,0);
 }
 
 
@@ -748,7 +756,7 @@ void output_instr(uint32_t instr) {
 	}
 
 	/* write to the program. */
-	char temp[9];
+	char temp[10];
 	sprintf(temp, "%x\n", instr);
 	fputs(temp,fp);
 	fclose(fp);
@@ -763,6 +771,8 @@ int main(int argc, char *argv[]) {
 	printf("MIPS-Assembler\n");
 	printf("**************************\n\n");
 	
+	remove("output.txt");
+
 	if (argc < 2) {
 		printf("Error: You should provide input file.\nUsage: %s <input program> \n\n",  argv[0]);
 		exit(1);
