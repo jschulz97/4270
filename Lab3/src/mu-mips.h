@@ -52,6 +52,7 @@ typedef struct CPU_Pipeline_Reg_Struct{
 	uint32_t B;
 	uint32_t D;
 	uint32_t imm;
+	uint32_t sa;
 	uint32_t ALUOutput;
 	uint32_t LMD;
 	
@@ -63,6 +64,10 @@ typedef struct CPU_Pipeline_Reg_Struct{
 
 CPU_State CURRENT_STATE, NEXT_STATE;
 int RUN_FLAG;	/* run flag*/
+int ID_FLAG = 0;
+int EX_FLAG = 0;
+int MEM_FLAG = 0;
+int WB_FLAG = 0;
 uint32_t INSTRUCTION_COUNT;
 uint32_t CYCLE_COUNT;
 uint32_t PROGRAM_SIZE; /*in words*/
@@ -78,6 +83,23 @@ CPU_Pipeline_Reg MEM_WB;
 
 char prog_file[32];
 
+
+typedef struct R_Type_Instruction {
+	uint32_t rs;
+	uint32_t rt;
+	uint32_t rd;
+	uint32_t shamt;
+} r_type_data;
+
+typedef struct I_Type_Instruction {
+	uint32_t rs;
+	uint32_t rt;
+	uint32_t immediate;
+} i_type_data;
+
+typedef struct J_Type_Instruction {
+	uint32_t target;
+} j_type_data;
 
 /***************************************************************/
 /* Function Declerations.                                                                                                */
@@ -103,4 +125,7 @@ void IF();/*IMPLEMENT THIS*/
 void show_pipeline();/*IMPLEMENT THIS*/
 void initialize();
 void print_program(); /*IMPLEMENT THIS*/
-
+r_type_data parse_r_type(uint32_t);
+i_type_data parse_i_type(uint32_t);
+j_type_data parse_j_type(uint32_t);
+void print_instruction(uint32_t addr);
