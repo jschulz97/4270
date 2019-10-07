@@ -388,15 +388,16 @@ void MEM()
 		switch(opcode) {
 			case 0xA0: //SB
 				MEM_WB.D =  MEM_WB.D & 0x000000FF;
-				mem_write_32(MEM_WB.ALUOutput, MEM_WB.D);
+				mem_write_32(MEM_WB.ALUOutput,MEM_WB.D);
 				break;
 			case 0xA4: //SH
 				MEM_WB.D = MEM_WB.D & 0x0000FFFF;
 				mem_write_32(MEM_WB.ALUOutput,MEM_WB.D);
 				break;
 			case 0xAC: //SW
-				MEM_WB.D = MEM_WB.D;
+				//MEM_WB.D = MEM_WB.D;
 				mem_write_32(MEM_WB.ALUOutput,MEM_WB.D);
+				printf("\n\n%x %x",MEM_WB.ALUOutput,MEM_WB.D);
 				break;
 			case 0x80: //LB
 				MEM_WB.LMD = mem_read_32(MEM_WB.ALUOutput) & 0x000000FF;
@@ -644,27 +645,27 @@ void EX()
 					break;
 				case 0x20: //LB
 					EX_MEM.ALUOutput = ID_EX.A + ID_EX.imm;
-					EX_MEM.B = ID_EX.B;					 
+					EX_MEM.D = ID_EX.D;					 
 					break;
 				case 0x21: //LH
 					EX_MEM.ALUOutput = ID_EX.A + ID_EX.imm;
-					EX_MEM.B = ID_EX.B;
+					EX_MEM.D = ID_EX.D;
 					break;
 				case 0x23: //LW
 					EX_MEM.ALUOutput = ID_EX.A + ID_EX.imm;
-					EX_MEM.B = ID_EX.B;
+					EX_MEM.D = ID_EX.D;
 					break;
 				case 0x28: //SB
 					EX_MEM.ALUOutput = ID_EX.A + ID_EX.imm;
-					EX_MEM.B = ID_EX.B;
+					EX_MEM.D = ID_EX.D;
 					break;
 				case 0x29: //SH
 					EX_MEM.ALUOutput = ID_EX.A + ID_EX.imm;
-					EX_MEM.B = ID_EX.B;
+					EX_MEM.D = ID_EX.D;
 					break;
 				case 0x2B: //SW
 					EX_MEM.ALUOutput = ID_EX.A + ID_EX.imm;
-					EX_MEM.B = ID_EX.B;
+					EX_MEM.D = ID_EX.D;
 					break;
 				default:
 					// put more things here
@@ -901,17 +902,17 @@ void ID()
 					break;
 				case 0x28: //SB
 					ID_EX.A 	= CURRENT_STATE.REGS[rs];
-					ID_EX.D 	= rt;
+					ID_EX.D 	= CURRENT_STATE.REGS[rt];
 					ID_EX.imm 	= immediate;	
 					break;
 				case 0x29: //SH
 					ID_EX.A 	= CURRENT_STATE.REGS[rs];
-					ID_EX.D 	= rt;
+					ID_EX.D 	= CURRENT_STATE.REGS[rt];
 					ID_EX.imm 	= immediate;
 					break;
 				case 0x2B: //SW
 					ID_EX.A 	= CURRENT_STATE.REGS[rs];
-					ID_EX.D 	= rt;
+					ID_EX.D 	= CURRENT_STATE.REGS[rt];
 					ID_EX.imm 	= immediate;
 					break;
 				default:
@@ -1198,6 +1199,7 @@ void show_pipeline(){
 	printf("\n\nMEM_WB.IR: %x",MEM_WB.IR);
 	printf("\nMEM_WB.ALUOutput: %x",MEM_WB.ALUOutput);
 	printf("\nMEM_WB.LMD: %x",MEM_WB.LMD);
+	printf("\n\n");
 }
 
 /***************************************************************/
