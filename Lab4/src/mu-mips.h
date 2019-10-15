@@ -78,6 +78,7 @@ uint32_t PROGRAM_SIZE; /*in words*/
 uint32_t ENABLE_FORWARDING = 0;
 int EX_HAZARD = 0;
 int MEM_HAZARD = 0;
+int STALL_COUNT = 0;
 
 
 /***************************************************************/

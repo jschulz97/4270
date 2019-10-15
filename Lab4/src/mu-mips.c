@@ -168,7 +168,7 @@ void handle_command() {
 	int register_value;
 	int hi_reg_value, lo_reg_value;
 
-	printf("MU-MIPS SIM:> ");
+	printf("\nMU-MIPS SIM:> ");
 
 	if (scanf("%s", buffer) == EOF){
 		exit(0);
@@ -708,8 +708,7 @@ void ID()
 		int branch_jump = FALSE;
 		
 		instruction = IF_ID.IR;
-		ID_EX.IR = IF_ID.IR;
-		printf("[0x%x]\t", instruction);
+		printf("\n\n[0x%x]\t", instruction);
 		
 		opcode = (instruction & 0xFC000000) >> 26;
 		function = instruction & 0x0000003F;
@@ -890,60 +889,70 @@ void ID()
 				case 0x08: //ADDI
 					ID_EX.A 	= CURRENT_STATE.REGS[rs];
 					ID_EX.D 	= rt;
+					ID_EX.rd    = rt;
 					ID_EX.imm 	= immediate;
 					ID_EX.RegWrite = 1;
 					break;
 				case 0x09: //ADDIU
 					ID_EX.A 	= CURRENT_STATE.REGS[rs];
 					ID_EX.D 	= rt;
+					ID_EX.rd    = rt;
 					ID_EX.imm 	= immediate;
 					ID_EX.RegWrite = 1;
 					break;
 				case 0x0A: //SLTI
 					ID_EX.A 	= CURRENT_STATE.REGS[rs];
 					ID_EX.D 	= rt;
+					ID_EX.rd    = rt;
 					ID_EX.imm 	= immediate;
 					ID_EX.RegWrite = 1;
 					break;
 				case 0x0C: //ANDI
 					ID_EX.A 	= CURRENT_STATE.REGS[rs];
 					ID_EX.D 	= rt;
+					ID_EX.rd    = rt;
 					ID_EX.imm 	= immediate;
 					ID_EX.RegWrite = 1;
 					break;
 				case 0x0D: //ORI
 					ID_EX.A 	= CURRENT_STATE.REGS[rs];
 					ID_EX.D 	= rt;
+					ID_EX.rd    = rt;
 					ID_EX.imm 	= immediate;
 					ID_EX.RegWrite = 1;
 					break;
 				case 0x0E: //XORI
 					ID_EX.A 	= CURRENT_STATE.REGS[rs];
 					ID_EX.D 	= rt;
+					ID_EX.rd    = rt;
 					ID_EX.imm 	= immediate;
 					ID_EX.RegWrite = 1;
 					break;
 				case 0x0F: //LUI
 					ID_EX.A 	= CURRENT_STATE.REGS[rs];
 					ID_EX.D 	= rt;
+					ID_EX.rd    = rt;
 					ID_EX.imm 	= immediate;
 					ID_EX.RegWrite = 1;
 					break;
 				case 0x20: //LB
 					ID_EX.A 	= CURRENT_STATE.REGS[rs];
 					ID_EX.D 	= rt;
+					ID_EX.rd    = rt;
 					ID_EX.imm 	= immediate;
 					ID_EX.RegWrite = 1;
 					break;
 				case 0x21: //LH
 					ID_EX.A 	= CURRENT_STATE.REGS[rs];
 					ID_EX.D 	= rt;
+					ID_EX.rd    = rt;
 					ID_EX.imm 	= immediate;
 					ID_EX.RegWrite = 1;
 					break;
 				case 0x23: //LW
 					ID_EX.A 	= CURRENT_STATE.REGS[rs];
 					ID_EX.D 	= rt;
+					ID_EX.rd    = rt;
 					ID_EX.imm 	= immediate;
 					ID_EX.RegWrite = 1;
 					break;
@@ -970,32 +979,57 @@ void ID()
 		}
 		EX_FLAG = 1;
 
-		// If execution hazard exists, set flag and clear out pipeline
-		if ( (EX_MEM.RegWrite && (EX_MEM.rd != 0) && (EX_MEM.rd == ID_EX.rs)) ||
-		 	 (EX_MEM.RegWrite && (EX_MEM.rd != 0) && (EX_MEM.rd == ID_EX.rt)) ) {
-			EX_HAZARD = 1;
-			ID_EX.A = 0;
-			ID_EX.B = 0;
-			ID_EX.D = 0;
-			ID_EX.imm = 0;
-			ID_EX.sa = 0;
-			ID_EX.IR = 0;
-		} else {
-			EX_HAZARD = 0;
-		}
+		printf("\nEX_MEM.RegWrite: %x\nEX_MEM.rd: %x\nID_EX.rs: %d\nID_EX.rt: %x",EX_MEM.RegWrite , EX_MEM.rd, ID_EX.rs, ID_EX.rt);
+		printf("\nstall cnt : %x",STALL_COUNT);
 
-		// If memory hazard exists, set flag and clear out pipeline
-		if ( (MEM_WB.RegWrite && (MEM_WB.rd != 0) && (MEM_WB.rd == ID_EX.rs)) ||
-			 (MEM_WB.RegWrite && (MEM_WB.rd != 0) && (MEM_WB.rd == ID_EX.rt)) ) {
-			MEM_HAZARD = 1;
+		if(STALL_COUNT > 0) {
 			ID_EX.A = 0;
 			ID_EX.B = 0;
 			ID_EX.D = 0;
 			ID_EX.imm = 0;
 			ID_EX.sa = 0;
 			ID_EX.IR = 0;
+			ID_EX.rs = 0;
+			ID_EX.rt = 0;
+			ID_EX.rd = 0;
 		} else {
-			MEM_HAZARD = 0;
+			// If execution hazard exists, set flag and clear out pipeline
+			if ( (EX_MEM.RegWrite && (EX_MEM.rd != 0) && (EX_MEM.rd == ID_EX.rs)) ||
+			 	 (EX_MEM.RegWrite && (EX_MEM.rd != 0) && (EX_MEM.rd == ID_EX.rt)) ) {
+				STALL_COUNT = 2;
+				EX_HAZARD = 1;
+				ID_EX.A = 0;
+				ID_EX.B = 0;
+				ID_EX.D = 0;
+				ID_EX.imm = 0;
+				ID_EX.sa = 0;
+				ID_EX.IR = 0;
+				ID_EX.rs = 0;
+				ID_EX.rt = 0;
+				ID_EX.rd = 0;
+			} else {
+				ID_EX.IR = IF_ID.IR;
+				EX_HAZARD = 0;
+			}
+
+			// If memory hazard exists, set flag and clear out pipeline
+			if ( (MEM_WB.RegWrite && (MEM_WB.rd != 0) && (MEM_WB.rd == ID_EX.rs)) ||
+				 (MEM_WB.RegWrite && (MEM_WB.rd != 0) && (MEM_WB.rd == ID_EX.rt)) ) {
+				STALL_COUNT = 1;
+				MEM_HAZARD = 1;
+				ID_EX.A = 0;
+				ID_EX.B = 0;
+				ID_EX.D = 0;
+				ID_EX.imm = 0;
+				ID_EX.sa = 0;
+				ID_EX.IR = 0;
+				ID_EX.rs = 0;
+				ID_EX.rt = 0;
+				ID_EX.rd = 0;
+			} else {
+				ID_EX.IR = IF_ID.IR;
+				MEM_HAZARD = 0;
+			}
 		}
 	}
 }
@@ -1006,11 +1040,17 @@ void ID()
 void IF()
 {
 	IF_ID.IR = mem_read_32(CURRENT_STATE.PC);
-	if(MEM_HAZARD != 1 && EX_HAZARD != 1) {
+	if(MEM_HAZARD != 1 && EX_HAZARD != 1 && STALL_COUNT == 0) {
 		IF_ID.PC = CURRENT_STATE.PC + 4;
+	} else {
+		printf("\n\nSHTALLIN\n");
 	}
 	NEXT_STATE.PC = IF_ID.PC;
 	ID_FLAG = 1;
+	STALL_COUNT--;
+	if(STALL_COUNT < 0) {
+		STALL_COUNT = 0;
+	}
 }
 
 

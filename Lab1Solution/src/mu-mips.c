@@ -279,6 +279,8 @@ void load_program() {
 	int i, word;
 	uint32_t address;
 
+	printf("\nbefore write\n");
+
 	/* Open program file. */
 	fp = fopen(prog_file, "r");
 	if (fp == NULL) {
