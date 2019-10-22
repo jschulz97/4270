@@ -85,9 +85,11 @@ int STALL_COUNT = 0;
 /* Pipeline Registers.                                                                                                        */
 /***************************************************************/
 CPU_Pipeline_Reg IF_ID;
+CPU_Pipeline_Reg ID_EX_Prev;
 CPU_Pipeline_Reg ID_EX;
 CPU_Pipeline_Reg EX_MEM;
 CPU_Pipeline_Reg MEM_WB;
+CPU_Pipeline_Reg Empty;
 
 char prog_file[32];
 

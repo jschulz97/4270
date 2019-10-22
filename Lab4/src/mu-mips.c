@@ -368,11 +368,20 @@ void WB()
 			case 0x8C: //LW
 				NEXT_STATE.REGS[MEM_WB.D] = MEM_WB.LMD;
 				break;
+			case 0xA0: //SB
+
+				break;
+			case 0xA4: //SH
+
+				break;
+			case 0xAC: //SW
+
+				break;
 			default: //I Type
 				NEXT_STATE.REGS[MEM_WB.D] = MEM_WB.ALUOutput;
 				break;
 		}
-
+		CURRENT_STATE = NEXT_STATE;
 	}
 }
 
@@ -700,315 +709,304 @@ void ID()
 {
 
 	if(ID_FLAG == 1) {
-		uint32_t instruction, opcode, function, rs, rt, rd, sa, immediate, target;
-		uint64_t product, p1, p2;
-		
-		uint32_t addr, data;
-		
-		int branch_jump = FALSE;
-		
-		instruction = IF_ID.IR;
-		printf("\n\n[0x%x]\t", instruction);
-		
-		opcode = (instruction & 0xFC000000) >> 26;
-		function = instruction & 0x0000003F;
-		rs = (instruction & 0x03E00000) >> 21;
-		rt = (instruction & 0x001F0000) >> 16;
-		rd = (instruction & 0x0000F800) >> 11;
-		sa = (instruction & 0x000007C0) >> 6;
-		immediate = instruction & 0x0000FFFF;
-		target = instruction & 0x03FFFFFF;
-
-		ID_EX.rs = rs;
-		ID_EX.rd = rd;
-		ID_EX.rt = rt;
-		ID_EX.RegWrite = 0;
-		
-		if(opcode == 0x00){
-			switch(function){
-				case 0x00: //SLL
-					ID_EX.A 	= CURRENT_STATE.REGS[rs];
-					ID_EX.B 	= CURRENT_STATE.REGS[rt];
-					ID_EX.D 	= rd;
-					ID_EX.sa 	= sa;
-					ID_EX.RegWrite = 1;
-					break;
-				case 0x02: //SRL
-					ID_EX.A 	= CURRENT_STATE.REGS[rs];
-					ID_EX.B 	= CURRENT_STATE.REGS[rt];
-					ID_EX.D 	= rd;
-					ID_EX.sa 	= sa;
-					ID_EX.RegWrite = 1;
-					break;
-				case 0x03: //SRA
-					ID_EX.A 	= CURRENT_STATE.REGS[rs];
-					ID_EX.B 	= CURRENT_STATE.REGS[rt];
-					ID_EX.D 	= rd;
-					ID_EX.sa 	= sa;
-					ID_EX.RegWrite = 1;
-					break;
-				// case 0x08: //JR
-				// 	break;
-				// case 0x09: //JALR
-				// 	break;
-				case 0x0C: //SYSCALL
-					;
-					break;
-				case 0x10: //MFHI
-					ID_EX.A 	= CURRENT_STATE.REGS[rs];
-					ID_EX.B 	= CURRENT_STATE.REGS[rt];
-					ID_EX.D 	= rd;
-					break;
-				case 0x11: //MTHI
-					ID_EX.A 	= CURRENT_STATE.REGS[rs];
-					ID_EX.B 	= CURRENT_STATE.REGS[rt];
-					ID_EX.D 	= rd;
-					break;
-				case 0x12: //MFLO
-					ID_EX.A 	= CURRENT_STATE.REGS[rs];
-					ID_EX.B 	= CURRENT_STATE.REGS[rt];
-					ID_EX.D 	=rd;
-					break;
-				case 0x13: //MTLO
-					ID_EX.A 	= CURRENT_STATE.REGS[rs];
-					ID_EX.B 	= CURRENT_STATE.REGS[rt];
-					ID_EX.D 	= rd;
-					break;
-				case 0x18: //MULT
-					ID_EX.A 	= CURRENT_STATE.REGS[rs];
-					ID_EX.B 	= CURRENT_STATE.REGS[rt];
-					ID_EX.D 	= rd;
-					ID_EX.RegWrite = 1;
-					break;
-				case 0x19: //MULTU
-					ID_EX.A 	= CURRENT_STATE.REGS[rs];
-					ID_EX.B 	= CURRENT_STATE.REGS[rt];
-					ID_EX.D 	= rd;
-					ID_EX.RegWrite = 1;
-					break;
-				case 0x1A: //DIV 
-					ID_EX.A 	= CURRENT_STATE.REGS[rs];
-					ID_EX.B 	= CURRENT_STATE.REGS[rt];
-					ID_EX.D 	= rd;
-					ID_EX.RegWrite = 1;
-					break;
-				case 0x1B: //DIVU
-					ID_EX.A 	= CURRENT_STATE.REGS[rs];
-					ID_EX.B 	= CURRENT_STATE.REGS[rt];
-					ID_EX.D 	= rd;
-					ID_EX.RegWrite = 1;
-
-					break;
-				case 0x20: //ADD
-					ID_EX.A 	= CURRENT_STATE.REGS[rs];
-					ID_EX.B 	= CURRENT_STATE.REGS[rt];
-					ID_EX.D 	= rd;
-					ID_EX.RegWrite = 1;
-					break;
-				case 0x21: //ADDU 
-					ID_EX.A 	= CURRENT_STATE.REGS[rs];
-					ID_EX.B 	= CURRENT_STATE.REGS[rt];
-					ID_EX.D 	= rd;
-					ID_EX.RegWrite = 1;
-					break;
-				case 0x22: //SUB
-					ID_EX.A 	= CURRENT_STATE.REGS[rs];
-					ID_EX.B 	= CURRENT_STATE.REGS[rt];
-					ID_EX.D 	= rd;
-					ID_EX.RegWrite = 1;
-					break;
-				case 0x23: //SUBU
-					ID_EX.A 	= CURRENT_STATE.REGS[rs];
-					ID_EX.B 	= CURRENT_STATE.REGS[rt];
-					ID_EX.D 	= rd;
-					ID_EX.RegWrite = 1;
-					break;
-				case 0x24: //AND
-					ID_EX.A 	= CURRENT_STATE.REGS[rs];
-					ID_EX.B 	= CURRENT_STATE.REGS[rt];
-					ID_EX.D 	= rd;
-					ID_EX.RegWrite = 1;
-					break;
-				case 0x25: //OR
-					ID_EX.A 	= CURRENT_STATE.REGS[rs];
-					ID_EX.B 	= CURRENT_STATE.REGS[rt];
-					ID_EX.D 	= rd;
-					ID_EX.RegWrite = 1;
-					break;
-				case 0x26: //XOR
-					ID_EX.A 	= CURRENT_STATE.REGS[rs];
-					ID_EX.B 	= CURRENT_STATE.REGS[rt];
-					ID_EX.D 	= rd;
-					ID_EX.RegWrite = 1;
-					break;
-				case 0x27: //NOR
-					ID_EX.A 	= CURRENT_STATE.REGS[rs];
-					ID_EX.B 	= CURRENT_STATE.REGS[rt];
-					ID_EX.D 	= rd;
-					ID_EX.RegWrite = 1;
-					break;
-				case 0x2A: //SLT
-					ID_EX.A 	= CURRENT_STATE.REGS[rs];
-					ID_EX.B 	= CURRENT_STATE.REGS[rt];
-					ID_EX.D 	= rd;
-					ID_EX.RegWrite = 1;
-					break;
-				default:
-					printf("Instruction at 0x%x is not implemented!\n", CURRENT_STATE.PC);
-					break;
-			}
-		}
-		else{
-			switch(opcode){
-				// case 0x01:
-				// 	if(rt == 0x00000){ //BLTZ
-
-				// 	}
-				// 	else if(rt == 0x00001){ //BGEZ
-
-				// 	}
-				// 	break;
-				// case 0x02: //J
-
-				// 	break;
-				// case 0x03: //JAL
-
-				// 	break;
-				// case 0x04: //BEQ
-
-				// 	break;
-				// case 0x05: //BNE
-
-				// 	break;
-				// case 0x06: //BLEZ
-
-				// 	break;
-				// case 0x07: //BGTZ
-
-				// 	break;
-				case 0x08: //ADDI
-					ID_EX.A 	= CURRENT_STATE.REGS[rs];
-					ID_EX.D 	= rt;
-					ID_EX.rd    = rt;
-					ID_EX.imm 	= immediate;
-					ID_EX.RegWrite = 1;
-					break;
-				case 0x09: //ADDIU
-					ID_EX.A 	= CURRENT_STATE.REGS[rs];
-					ID_EX.D 	= rt;
-					ID_EX.rd    = rt;
-					ID_EX.imm 	= immediate;
-					ID_EX.RegWrite = 1;
-					break;
-				case 0x0A: //SLTI
-					ID_EX.A 	= CURRENT_STATE.REGS[rs];
-					ID_EX.D 	= rt;
-					ID_EX.rd    = rt;
-					ID_EX.imm 	= immediate;
-					ID_EX.RegWrite = 1;
-					break;
-				case 0x0C: //ANDI
-					ID_EX.A 	= CURRENT_STATE.REGS[rs];
-					ID_EX.D 	= rt;
-					ID_EX.rd    = rt;
-					ID_EX.imm 	= immediate;
-					ID_EX.RegWrite = 1;
-					break;
-				case 0x0D: //ORI
-					ID_EX.A 	= CURRENT_STATE.REGS[rs];
-					ID_EX.D 	= rt;
-					ID_EX.rd    = rt;
-					ID_EX.imm 	= immediate;
-					ID_EX.RegWrite = 1;
-					break;
-				case 0x0E: //XORI
-					ID_EX.A 	= CURRENT_STATE.REGS[rs];
-					ID_EX.D 	= rt;
-					ID_EX.rd    = rt;
-					ID_EX.imm 	= immediate;
-					ID_EX.RegWrite = 1;
-					break;
-				case 0x0F: //LUI
-					ID_EX.A 	= CURRENT_STATE.REGS[rs];
-					ID_EX.D 	= rt;
-					ID_EX.rd    = rt;
-					ID_EX.imm 	= immediate;
-					ID_EX.RegWrite = 1;
-					break;
-				case 0x20: //LB
-					ID_EX.A 	= CURRENT_STATE.REGS[rs];
-					ID_EX.D 	= rt;
-					ID_EX.rd    = rt;
-					ID_EX.imm 	= immediate;
-					ID_EX.RegWrite = 1;
-					break;
-				case 0x21: //LH
-					ID_EX.A 	= CURRENT_STATE.REGS[rs];
-					ID_EX.D 	= rt;
-					ID_EX.rd    = rt;
-					ID_EX.imm 	= immediate;
-					ID_EX.RegWrite = 1;
-					break;
-				case 0x23: //LW
-					ID_EX.A 	= CURRENT_STATE.REGS[rs];
-					ID_EX.D 	= rt;
-					ID_EX.rd    = rt;
-					ID_EX.imm 	= immediate;
-					ID_EX.RegWrite = 1;
-					break;
-				case 0x28: //SB
-					ID_EX.A 	= CURRENT_STATE.REGS[rs];
-					ID_EX.D 	= CURRENT_STATE.REGS[rt];
-					ID_EX.imm 	= immediate;	
-					break;
-				case 0x29: //SH
-					ID_EX.A 	= CURRENT_STATE.REGS[rs];
-					ID_EX.D 	= CURRENT_STATE.REGS[rt];
-					ID_EX.imm 	= immediate;
-					break;
-				case 0x2B: //SW
-					ID_EX.A 	= CURRENT_STATE.REGS[rs];
-					ID_EX.D 	= CURRENT_STATE.REGS[rt];
-					ID_EX.imm 	= immediate;
-					break;
-				default:
-					// put more things here
-					printf("Instruction at 0x%x is not implemented!\n", CURRENT_STATE.PC);
-					break;
-			}
-		}
-		EX_FLAG = 1;
-
-		printf("\nEX_MEM.RegWrite: %x\nEX_MEM.rd: %x\nID_EX.rs: %d\nID_EX.rt: %x",EX_MEM.RegWrite , EX_MEM.rd, ID_EX.rs, ID_EX.rt);
-		printf("\nstall cnt : %x",STALL_COUNT);
-
 		if(STALL_COUNT > 0) {
-			ID_EX.A = 0;
-			ID_EX.B = 0;
-			ID_EX.D = 0;
-			ID_EX.imm = 0;
-			ID_EX.sa = 0;
-			ID_EX.IR = 0;
-			ID_EX.rs = 0;
-			ID_EX.rt = 0;
-			ID_EX.rd = 0;
+			printf("\nID STALL\n");
 		} else {
+			uint32_t instruction, opcode, function, rs, rt, rd, sa, immediate, target;
+			uint64_t product, p1, p2;
+			
+			uint32_t addr, data;
+			
+			int branch_jump = FALSE;
+			
+			instruction = IF_ID.IR;
+			printf("\n\n[0x%x]\t", instruction);
+			
+			opcode = (instruction & 0xFC000000) >> 26;
+			function = instruction & 0x0000003F;
+			rs = (instruction & 0x03E00000) >> 21;
+			rt = (instruction & 0x001F0000) >> 16;
+			rd = (instruction & 0x0000F800) >> 11;
+			sa = (instruction & 0x000007C0) >> 6;
+			immediate = instruction & 0x0000FFFF;
+			target = instruction & 0x03FFFFFF;
+
+			ID_EX.IR = IF_ID.IR;
+			ID_EX.rs = rs;
+			ID_EX.rd = rd;
+			ID_EX.rt = rt;
+			ID_EX.RegWrite = 0;
+
+			ID_EX_Prev = ID_EX;
+			
+			if(opcode == 0x00){
+				switch(function){
+					case 0x00: //SLL
+						ID_EX.A 	= CURRENT_STATE.REGS[rs];
+						ID_EX.B 	= CURRENT_STATE.REGS[rt];
+						ID_EX.D 	= rd;
+						ID_EX.sa 	= sa;
+						ID_EX.RegWrite = 1;
+						break;
+					case 0x02: //SRL
+						ID_EX.A 	= CURRENT_STATE.REGS[rs];
+						ID_EX.B 	= CURRENT_STATE.REGS[rt];
+						ID_EX.D 	= rd;
+						ID_EX.sa 	= sa;
+						ID_EX.RegWrite = 1;
+						break;
+					case 0x03: //SRA
+						ID_EX.A 	= CURRENT_STATE.REGS[rs];
+						ID_EX.B 	= CURRENT_STATE.REGS[rt];
+						ID_EX.D 	= rd;
+						ID_EX.sa 	= sa;
+						ID_EX.RegWrite = 1;
+						break;
+					// case 0x08: //JR
+					// 	break;
+					// case 0x09: //JALR
+					// 	break;
+					case 0x0C: //SYSCALL
+						;
+						break;
+					case 0x10: //MFHI
+						ID_EX.A 	= CURRENT_STATE.REGS[rs];
+						ID_EX.B 	= CURRENT_STATE.REGS[rt];
+						ID_EX.D 	= rd;
+						break;
+					case 0x11: //MTHI
+						ID_EX.A 	= CURRENT_STATE.REGS[rs];
+						ID_EX.B 	= CURRENT_STATE.REGS[rt];
+						ID_EX.D 	= rd;
+						break;
+					case 0x12: //MFLO
+						ID_EX.A 	= CURRENT_STATE.REGS[rs];
+						ID_EX.B 	= CURRENT_STATE.REGS[rt];
+						ID_EX.D 	=rd;
+						break;
+					case 0x13: //MTLO
+						ID_EX.A 	= CURRENT_STATE.REGS[rs];
+						ID_EX.B 	= CURRENT_STATE.REGS[rt];
+						ID_EX.D 	= rd;
+						break;
+					case 0x18: //MULT
+						ID_EX.A 	= CURRENT_STATE.REGS[rs];
+						ID_EX.B 	= CURRENT_STATE.REGS[rt];
+						ID_EX.D 	= rd;
+						ID_EX.RegWrite = 1;
+						break;
+					case 0x19: //MULTU
+						ID_EX.A 	= CURRENT_STATE.REGS[rs];
+						ID_EX.B 	= CURRENT_STATE.REGS[rt];
+						ID_EX.D 	= rd;
+						ID_EX.RegWrite = 1;
+						break;
+					case 0x1A: //DIV 
+						ID_EX.A 	= CURRENT_STATE.REGS[rs];
+						ID_EX.B 	= CURRENT_STATE.REGS[rt];
+						ID_EX.D 	= rd;
+						ID_EX.RegWrite = 1;
+						break;
+					case 0x1B: //DIVU
+						ID_EX.A 	= CURRENT_STATE.REGS[rs];
+						ID_EX.B 	= CURRENT_STATE.REGS[rt];
+						ID_EX.D 	= rd;
+						ID_EX.RegWrite = 1;
+
+						break;
+					case 0x20: //ADD
+						ID_EX.A 	= CURRENT_STATE.REGS[rs];
+						ID_EX.B 	= CURRENT_STATE.REGS[rt];
+						ID_EX.D 	= rd;
+						ID_EX.RegWrite = 1;
+						break;
+					case 0x21: //ADDU 
+						ID_EX.A 	= CURRENT_STATE.REGS[rs];
+						ID_EX.B 	= CURRENT_STATE.REGS[rt];
+						ID_EX.D 	= rd;
+						ID_EX.RegWrite = 1;
+						break;
+					case 0x22: //SUB
+						ID_EX.A 	= CURRENT_STATE.REGS[rs];
+						ID_EX.B 	= CURRENT_STATE.REGS[rt];
+						ID_EX.D 	= rd;
+						ID_EX.RegWrite = 1;
+						break;
+					case 0x23: //SUBU
+						ID_EX.A 	= CURRENT_STATE.REGS[rs];
+						ID_EX.B 	= CURRENT_STATE.REGS[rt];
+						ID_EX.D 	= rd;
+						ID_EX.RegWrite = 1;
+						break;
+					case 0x24: //AND
+						ID_EX.A 	= CURRENT_STATE.REGS[rs];
+						ID_EX.B 	= CURRENT_STATE.REGS[rt];
+						ID_EX.D 	= rd;
+						ID_EX.RegWrite = 1;
+						break;
+					case 0x25: //OR
+						ID_EX.A 	= CURRENT_STATE.REGS[rs];
+						ID_EX.B 	= CURRENT_STATE.REGS[rt];
+						ID_EX.D 	= rd;
+						ID_EX.RegWrite = 1;
+						break;
+					case 0x26: //XOR
+						ID_EX.A 	= CURRENT_STATE.REGS[rs];
+						ID_EX.B 	= CURRENT_STATE.REGS[rt];
+						ID_EX.D 	= rd;
+						ID_EX.RegWrite = 1;
+						break;
+					case 0x27: //NOR
+						ID_EX.A 	= CURRENT_STATE.REGS[rs];
+						ID_EX.B 	= CURRENT_STATE.REGS[rt];
+						ID_EX.D 	= rd;
+						ID_EX.RegWrite = 1;
+						break;
+					case 0x2A: //SLT
+						ID_EX.A 	= CURRENT_STATE.REGS[rs];
+						ID_EX.B 	= CURRENT_STATE.REGS[rt];
+						ID_EX.D 	= rd;
+						ID_EX.RegWrite = 1;
+						break;
+					default:
+						printf("Instruction at 0x%x is not implemented!\n", CURRENT_STATE.PC);
+						break;
+				}
+			}
+			else{
+				switch(opcode){
+					// case 0x01:
+					// 	if(rt == 0x00000){ //BLTZ
+
+					// 	}
+					// 	else if(rt == 0x00001){ //BGEZ
+
+					// 	}
+					// 	break;
+					// case 0x02: //J
+
+					// 	break;
+					// case 0x03: //JAL
+
+					// 	break;
+					// case 0x04: //BEQ
+
+					// 	break;
+					// case 0x05: //BNE
+
+					// 	break;
+					// case 0x06: //BLEZ
+
+					// 	break;
+					// case 0x07: //BGTZ
+
+					// 	break;
+					case 0x08: //ADDI
+						ID_EX.A 	= CURRENT_STATE.REGS[rs];
+						ID_EX.D 	= rt;
+						ID_EX.rd    = rt;
+						ID_EX.imm 	= immediate;
+						ID_EX.RegWrite = 1;
+						break;
+					case 0x09: //ADDIU
+						ID_EX.A 	= CURRENT_STATE.REGS[rs];
+						ID_EX.D 	= rt;
+						ID_EX.rd    = rt;
+						ID_EX.imm 	= immediate;
+						ID_EX.RegWrite = 1;
+						break;
+					case 0x0A: //SLTI
+						ID_EX.A 	= CURRENT_STATE.REGS[rs];
+						ID_EX.D 	= rt;
+						ID_EX.rd    = rt;
+						ID_EX.imm 	= immediate;
+						ID_EX.RegWrite = 1;
+						break;
+					case 0x0C: //ANDI
+						ID_EX.A 	= CURRENT_STATE.REGS[rs];
+						ID_EX.D 	= rt;
+						ID_EX.rd    = rt;
+						ID_EX.imm 	= immediate;
+						ID_EX.RegWrite = 1;
+						break;
+					case 0x0D: //ORI
+						ID_EX.A 	= CURRENT_STATE.REGS[rs];
+						ID_EX.D 	= rt;
+						ID_EX.rd    = rt;
+						ID_EX.imm 	= immediate;
+						ID_EX.RegWrite = 1;
+						break;
+					case 0x0E: //XORI
+						ID_EX.A 	= CURRENT_STATE.REGS[rs];
+						ID_EX.D 	= rt;
+						ID_EX.rd    = rt;
+						ID_EX.imm 	= immediate;
+						ID_EX.RegWrite = 1;
+						break;
+					case 0x0F: //LUI
+						ID_EX.A 	= CURRENT_STATE.REGS[rs];
+						ID_EX.D 	= rt;
+						ID_EX.rd    = rt;
+						ID_EX.imm 	= immediate;
+						ID_EX.RegWrite = 1;
+						break;
+					case 0x20: //LB
+						ID_EX.A 	= CURRENT_STATE.REGS[rs];
+						ID_EX.D 	= rt;
+						ID_EX.rd    = rt;
+						ID_EX.imm 	= immediate;
+						ID_EX.RegWrite = 1;
+						break;
+					case 0x21: //LH
+						ID_EX.A 	= CURRENT_STATE.REGS[rs];
+						ID_EX.D 	= rt;
+						ID_EX.rd    = rt;
+						ID_EX.imm 	= immediate;
+						ID_EX.RegWrite = 1;
+						break;
+					case 0x23: //LW
+						ID_EX.A 	= CURRENT_STATE.REGS[rs];
+						ID_EX.D 	= rt;
+						ID_EX.rd    = rt;
+						ID_EX.imm 	= immediate;
+						ID_EX.RegWrite = 1;
+						break;
+					case 0x28: //SB
+						ID_EX.A 	= CURRENT_STATE.REGS[rs];
+						ID_EX.D 	= CURRENT_STATE.REGS[rt];
+						ID_EX.imm 	= immediate;	
+						break;
+					case 0x29: //SH
+						ID_EX.A 	= CURRENT_STATE.REGS[rs];
+						ID_EX.D 	= CURRENT_STATE.REGS[rt];
+						ID_EX.imm 	= immediate;
+						break;
+					case 0x2B: //SW
+						ID_EX.A 	= CURRENT_STATE.REGS[rs];
+						ID_EX.D 	= CURRENT_STATE.REGS[rt];
+						ID_EX.imm 	= immediate;
+						break;
+					default:
+						// put more things here
+						printf("Instruction at 0x%x is not implemented!\n", CURRENT_STATE.PC);
+						break;
+				}
+			}
+			EX_FLAG = 1;
+
+			printf("\nEX_MEM.RegWrite: %x\nEX_MEM.rd: %x\nID_EX.rs: %d\nID_EX.rt: %x",EX_MEM.RegWrite , EX_MEM.rd, ID_EX.rs, ID_EX.rt);
+			printf("\nstall cnt : %x",STALL_COUNT);
+
+		
 			// If execution hazard exists, set flag and clear out pipeline
 			if ( (EX_MEM.RegWrite && (EX_MEM.rd != 0) && (EX_MEM.rd == ID_EX.rs)) ||
 			 	 (EX_MEM.RegWrite && (EX_MEM.rd != 0) && (EX_MEM.rd == ID_EX.rt)) ) {
 				STALL_COUNT = 2;
 				EX_HAZARD = 1;
-				ID_EX.A = 0;
-				ID_EX.B = 0;
-				ID_EX.D = 0;
-				ID_EX.imm = 0;
-				ID_EX.sa = 0;
-				ID_EX.IR = 0;
-				ID_EX.rs = 0;
-				ID_EX.rt = 0;
-				ID_EX.rd = 0;
+				//IF_ID = ID_EX;
+				ID_EX = Empty;
 			} else {
-				ID_EX.IR = IF_ID.IR;
+				//ID_EX.IR = IF_ID.IR;
 				EX_HAZARD = 0;
 			}
 
@@ -1017,17 +1015,9 @@ void ID()
 				 (MEM_WB.RegWrite && (MEM_WB.rd != 0) && (MEM_WB.rd == ID_EX.rt)) ) {
 				STALL_COUNT = 1;
 				MEM_HAZARD = 1;
-				ID_EX.A = 0;
-				ID_EX.B = 0;
-				ID_EX.D = 0;
-				ID_EX.imm = 0;
-				ID_EX.sa = 0;
-				ID_EX.IR = 0;
-				ID_EX.rs = 0;
-				ID_EX.rt = 0;
-				ID_EX.rd = 0;
+				ID_EX = Empty;
 			} else {
-				ID_EX.IR = IF_ID.IR;
+				//ID_EX.IR = IF_ID.IR;
 				MEM_HAZARD = 0;
 			}
 		}
@@ -1039,8 +1029,8 @@ void ID()
 /************************************************************/
 void IF()
 {
-	IF_ID.IR = mem_read_32(CURRENT_STATE.PC);
 	if(MEM_HAZARD != 1 && EX_HAZARD != 1 && STALL_COUNT == 0) {
+		IF_ID.IR = mem_read_32(CURRENT_STATE.PC);
 		IF_ID.PC = CURRENT_STATE.PC + 4;
 	} else {
 		printf("\n\nSHTALLIN\n");
