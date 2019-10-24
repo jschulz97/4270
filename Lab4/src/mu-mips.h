@@ -75,10 +75,12 @@ int WB_FLAG = 0;
 uint32_t INSTRUCTION_COUNT;
 uint32_t CYCLE_COUNT;
 uint32_t PROGRAM_SIZE; /*in words*/
-uint32_t ENABLE_FORWARDING = 0;
+uint32_t ENABLE_FORWARDING = 1;
 int EX_HAZARD = 0;
 int MEM_HAZARD = 0;
 int STALL_COUNT = 0;
+int controlA = 0;
+int controlB = 0;
 
 
 /***************************************************************/
