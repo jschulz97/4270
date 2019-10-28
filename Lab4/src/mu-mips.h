@@ -81,6 +81,7 @@ int MEM_HAZARD = 0;
 int STALL_COUNT = 0;
 int controlA = 0;
 int controlB = 0;
+uint32_t prev_op;
 
 
 /***************************************************************/

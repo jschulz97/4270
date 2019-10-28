@@ -9,7 +9,7 @@
 /***************************************************************/
 /* Print out a list of commands available                                                                  */
 /***************************************************************/
-void help() {        
+void help() {
 	printf("------------------------------------------------------------------\n\n");
 	printf("\t**********MU-MIPS Help MENU**********\n\n");
 	printf("sim\t-- simulate program to completion \n");
@@ -710,6 +710,7 @@ void ID()
 {
 
 	if(ID_FLAG == 1) {
+		printf("id stall: %d",STALL_COUNT);
 		if(STALL_COUNT > 0) {
 			printf("\nID STALL\n");
 		} else {
@@ -997,33 +998,34 @@ void ID()
 
 
 			if(ENABLE_FORWARDING == 1) {
+				//uint32_t prev_op = (EX_MEM.IR & 0xFC000000) >> 26;
 				if (EX_MEM.RegWrite && (EX_MEM.D != 0) && (EX_MEM.D == ID_EX.rs)) {
 					printf("\ninto A2\n");
 					controlA = 2;
 					printf("\n%x",opcode);
-					if(opcode == 0x20 || opcode == 0x21 || opcode == 0x23) {	
+					if(prev_op == 0x20 || prev_op == 0x21 || prev_op == 0x23) {	
 						printf("\nInside A2 Stall");
 						STALL_COUNT = 1;
 					}
 				}
-				if (EX_MEM.RegWrite && (EX_MEM.D != 0) && (EX_MEM.D == ID_EX.rt)) {
+				else if (EX_MEM.RegWrite && (EX_MEM.D != 0) && (EX_MEM.D == ID_EX.rt)) {
 					printf("\ninto B2\n");
 					controlB = 2;
-					if(opcode == 0x20 || opcode == 0x21 || opcode == 0x23) {	
+					if(prev_op == 0x20 || prev_op == 0x21 || prev_op == 0x23) {	
 						STALL_COUNT = 1;
 					}
 				}
-				if (MEM_WB.RegWrite && (MEM_WB.D != 0) && !(EX_MEM.RegWrite && (EX_MEM.D != 0) && (EX_MEM.D == ID_EX.rs)) && (MEM_WB.D == ID_EX.rs)) {
+				else if (MEM_WB.RegWrite && (MEM_WB.D != 0) && !(EX_MEM.RegWrite && (EX_MEM.D != 0) && (EX_MEM.D == ID_EX.rs)) && (MEM_WB.D == ID_EX.rs)) {
 					printf("\ninto A1\n");
 					controlA = 1;
 				}
-				if (MEM_WB.RegWrite && (MEM_WB.D != 0) && !(EX_MEM.RegWrite && (EX_MEM.D != 0) && (EX_MEM.D == ID_EX.rt)) && (MEM_WB.D == ID_EX.rt)) {
+				else if (MEM_WB.RegWrite && (MEM_WB.D != 0) && !(EX_MEM.RegWrite && (EX_MEM.D != 0) && (EX_MEM.D == ID_EX.rt)) && (MEM_WB.D == ID_EX.rt)) {
 					printf("\ninto B1\n");
 					controlB = 1;
 				}
 
 				if(controlA == 2 && STALL_COUNT == 0) {
-					if(opcode == 0x20 || opcode == 0x21 || opcode == 0x23) {	
+					if(prev_op == 0x20 || prev_op == 0x21 || prev_op == 0x23) {	
 						ID_EX.A = MEM_WB.LMD;
 					} else {
 						ID_EX.A = EX_MEM.ALUOutput;
@@ -1031,7 +1033,7 @@ void ID()
 					controlA = 0;
 				}
 				if(controlB == 2 && STALL_COUNT == 0) {
-					if(opcode == 0x20 || opcode == 0x21 || opcode == 0x23) {	
+					if(prev_op == 0x20 || prev_op == 0x21 || prev_op == 0x23) {	
 						ID_EX.B = MEM_WB.LMD;
 					} else {
 						switch(opcode) {
@@ -1052,7 +1054,11 @@ void ID()
 					controlB = 0;
 				}
 				if(controlA == 1 && STALL_COUNT == 0) {
-					ID_EX.A = EX_MEM.ALUOutput;
+					if(prev_op == 0x20 || prev_op == 0x21 || prev_op == 0x23) {	
+						ID_EX.A = MEM_WB.LMD;
+					} else {
+						ID_EX.A = EX_MEM.ALUOutput;
+					}
 					controlA = 0;
 				}
 				if(controlB == 1 && STALL_COUNT == 0) {
@@ -1083,7 +1089,10 @@ void ID()
 			}
 
 			printf("\nEX_MEM.RegWrite: %x\nEX_MEM.rd: %x\nID_EX.rs: %x\nID_EX.rt: %x",EX_MEM.RegWrite , EX_MEM.rd, ID_EX.rs, ID_EX.rt);
-			printf("\nStall cnt : %x",STALL_COUNT);
+			printf("\nStall cnt : %x\nprev: %x",STALL_COUNT,prev_op);
+			if(STALL_COUNT == 0) {
+				prev_op = opcode;
+			}
 		}
 	}
 }
@@ -1093,7 +1102,8 @@ void ID()
 /************************************************************/
 void IF()
 {
-	if(MEM_HAZARD != 1 && EX_HAZARD != 1 && STALL_COUNT == 0) {
+	if(STALL_COUNT == 0) {
+	//if(MEM_HAZARD != 1 && EX_HAZARD != 1 && STALL_COUNT == 0) {
 		IF_ID.IR = mem_read_32(CURRENT_STATE.PC);
 		IF_ID.PC = CURRENT_STATE.PC + 4;
 	} else {
