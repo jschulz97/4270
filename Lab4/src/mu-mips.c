@@ -417,7 +417,6 @@ void MEM()
 			case 0xAC: //SW
 				//MEM_WB.D = MEM_WB.D;
 				mem_write_32(MEM_WB.ALUOutput,MEM_WB.D);
-				printf("\n\n%x %x",MEM_WB.ALUOutput,MEM_WB.D);
 				break;
 			case 0x80: //LB
 				MEM_WB.LMD = mem_read_32(MEM_WB.ALUOutput) & 0x000000FF;
@@ -710,9 +709,8 @@ void ID()
 {
 
 	if(ID_FLAG == 1) {
-		printf("id stall: %d",STALL_COUNT);
 		if(STALL_COUNT > 0) {
-			printf("\nID STALL\n");
+			;
 		} else {
 			uint32_t instruction, opcode, function, rs, rt, rd, sa, immediate, target;
 			uint64_t product, p1, p2;
@@ -1000,27 +998,21 @@ void ID()
 			if(ENABLE_FORWARDING == 1) {
 				//uint32_t prev_op = (EX_MEM.IR & 0xFC000000) >> 26;
 				if (EX_MEM.RegWrite && (EX_MEM.D != 0) && (EX_MEM.D == ID_EX.rs)) {
-					printf("\ninto A2\n");
 					controlA = 2;
-					printf("\n%x",opcode);
 					if(prev_op == 0x20 || prev_op == 0x21 || prev_op == 0x23) {	
-						printf("\nInside A2 Stall");
 						STALL_COUNT = 1;
 					}
 				}
 				else if (EX_MEM.RegWrite && (EX_MEM.D != 0) && (EX_MEM.D == ID_EX.rt)) {
-					printf("\ninto B2\n");
 					controlB = 2;
 					if(prev_op == 0x20 || prev_op == 0x21 || prev_op == 0x23) {	
 						STALL_COUNT = 1;
 					}
 				}
 				else if (MEM_WB.RegWrite && (MEM_WB.D != 0) && !(EX_MEM.RegWrite && (EX_MEM.D != 0) && (EX_MEM.D == ID_EX.rs)) && (MEM_WB.D == ID_EX.rs)) {
-					printf("\ninto A1\n");
 					controlA = 1;
 				}
 				else if (MEM_WB.RegWrite && (MEM_WB.D != 0) && !(EX_MEM.RegWrite && (EX_MEM.D != 0) && (EX_MEM.D == ID_EX.rt)) && (MEM_WB.D == ID_EX.rt)) {
-					printf("\ninto B1\n");
 					controlB = 1;
 				}
 
@@ -1088,8 +1080,6 @@ void ID()
 				}
 			}
 
-			printf("\nEX_MEM.RegWrite: %x\nEX_MEM.rd: %x\nID_EX.rs: %x\nID_EX.rt: %x",EX_MEM.RegWrite , EX_MEM.rd, ID_EX.rs, ID_EX.rt);
-			printf("\nStall cnt : %x\nprev: %x",STALL_COUNT,prev_op);
 			if(STALL_COUNT == 0) {
 				prev_op = opcode;
 			}
@@ -1107,7 +1097,7 @@ void IF()
 		IF_ID.IR = mem_read_32(CURRENT_STATE.PC);
 		IF_ID.PC = CURRENT_STATE.PC + 4;
 	} else {
-		printf("\n\nSHTALLIN\n");
+		printf("\n\nStalling!\n");
 	}
 	NEXT_STATE.PC = IF_ID.PC;
 	ID_FLAG = 1;
