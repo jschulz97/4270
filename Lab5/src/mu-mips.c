@@ -456,10 +456,10 @@ void EX()
 		if(opcode == 0x00){
 			switch(function){
 				case 0x00: //SLL
-					EX_MEM.ALUOutput = ID_EX.B << ID_EX.imm;
+					EX_MEM.ALUOutput = ID_EX.B << ID_EX.sa;
 					break;
 				case 0x02: //SRL
-					EX_MEM.ALUOutput = ID_EX.B >> ID_EX.imm;
+					EX_MEM.ALUOutput = ID_EX.B >> ID_EX.sa;
 					break;
 				case 0x03: //SRA 
 					if ((ID_EX.B & 0x80000000) == 1)
@@ -471,12 +471,13 @@ void EX()
 					}
 					break;
 				case 0x08: //JR
-					NEXT_STATE.PC = CURRENT_STATE.REGS[rs];
+					NEXT_STATE.PC = ID_EX.A;
 					BRANCH_FLAG = 1;
 					 
 					break;
-				case 0x09: //JALR -- UNSURE
-					NEXT_STATE.PC = CURRENT_STATE.PC + 4;
+				case 0x09: //JALR
+					EX_MEM.ALUOutput = CURRENT_STATE.PC + 4;
+					NEXT_STATE.PC    = ID_EX.A;
 					BRANCH_FLAG = 1;
 					 
 					break;
@@ -581,30 +582,33 @@ void EX()
 		else{
 			switch(opcode){
 				case 0x01:
-					if(rt == 0x00000){ //BLTZ
+					if(EX_MEM.rt == 0x00000){ //BLTZ
 						if((ID_EX.A & 0x80000000) > 0){
 							NEXT_STATE.PC = ID_EX.PC + ( (ID_EX.imm & 0x8000) > 0 ? (ID_EX.imm | 0xFFFF0000)<<2 : (ID_EX.imm & 0x0000FFFF)<<2);
 							BRANCH_FLAG = 1;
 						}
+						STALL_COUNT = 1;
 						 
 					}
-					else if(rt == 0x00001){ //BGEZ
+					else if(EX_MEM.rt == 0x00001){ //BGEZ
 						if((ID_EX.A & 0x80000000) == 0x0){
 							NEXT_STATE.PC = ID_EX.PC + ( (ID_EX.imm & 0x8000) > 0 ? (ID_EX.imm | 0xFFFF0000)<<2 : (ID_EX.imm & 0x0000FFFF)<<2);
 							BRANCH_FLAG = 1;
 						}
-						 
+						STALL_COUNT = 1;
 					}
 					break;
 				case 0x02: //J
 					NEXT_STATE.PC = (ID_EX.PC & 0xF0000000) | (ID_EX.target << 2);
 					BRANCH_FLAG = 1;
+					STALL_COUNT = 1;
 					 
 					break;
 				case 0x03: //JAL
 					NEXT_STATE.PC = (ID_EX.PC & 0xF0000000) | (ID_EX.target << 2);
 					NEXT_STATE.REGS[31] = CURRENT_STATE.PC + 4;
 					BRANCH_FLAG = 1;
+					STALL_COUNT = 1;
 					 
 					break;
 				case 0x04: //BEQ
@@ -612,6 +616,7 @@ void EX()
 						NEXT_STATE.PC = ID_EX.PC + ( (ID_EX.imm & 0x8000) > 0 ? (ID_EX.imm | 0xFFFF0000)<<2 : (ID_EX.imm & 0x0000FFFF)<<2);
 						BRANCH_FLAG = 1;
 					}
+					STALL_COUNT = 1;
 					 
 					break;
 				case 0x05: //BNE
@@ -619,6 +624,7 @@ void EX()
 						NEXT_STATE.PC = ID_EX.PC + ( (ID_EX.imm & 0x8000) > 0 ? (ID_EX.imm | 0xFFFF0000)<<2 : (ID_EX.imm & 0x0000FFFF)<<2);
 						BRANCH_FLAG = 1;
 					}
+					STALL_COUNT = 1;
 					 
 					break;
 				case 0x06: //BLEZ
@@ -626,6 +632,7 @@ void EX()
 						NEXT_STATE.PC = ID_EX.PC +  ( (ID_EX.imm & 0x8000) > 0 ? (ID_EX.imm | 0xFFFF0000)<<2 : (ID_EX.imm & 0x0000FFFF)<<2);
 						BRANCH_FLAG = 1;
 					}
+					STALL_COUNT = 1;
 					 
 					break;
 				case 0x07: //BGTZ
@@ -633,6 +640,7 @@ void EX()
 						NEXT_STATE.PC = ID_EX.PC +  ( (ID_EX.imm & 0x8000) > 0 ? (ID_EX.imm | 0xFFFF0000)<<2 : (ID_EX.imm & 0x0000FFFF)<<2);
 						BRANCH_FLAG = 1;
 					}
+					STALL_COUNT = 1;
 					 
 					break;
 				case 0x08: //ADDI
@@ -707,8 +715,11 @@ void EX()
 void ID()
 {
 
+
 	if(ID_FLAG == 1) {
 		if(STALL_COUNT > 0) {
+			;
+		} else if(BRANCH_FLAG == 1) {
 			;
 		} else {
 			uint32_t instruction, opcode, function, rs, rt, rd, sa, immediate, target;
@@ -716,7 +727,7 @@ void ID()
 			
 			uint32_t addr, data;
 			
-			int branch_jump = FALSE;
+			//int branch_jump = FALSE;
 			
 			instruction = IF_ID.IR;
 			printf("\n\n[0x%x]\t", instruction);
@@ -763,11 +774,12 @@ void ID()
 						ID_EX.RegWrite = 1;
 						break;
 					case 0x08: //JR
-						ID_EX.target = target;
+						ID_EX.A     = CURRENT_STATE.REGS[rs];
 						break;
 					case 0x09: //JALR
-						ID_EX.A      = CURRENT_STATE.REGS[rs];
-						ID_EX.B   	 = CURRENT_STATE.REGS[rd];
+						ID_EX.A     = CURRENT_STATE.REGS[rs];
+						ID_EX.D   	= rd;
+						ID_EX.RegWrite = 1;
 						break;
 					case 0x0C: //SYSCALL
 						;
@@ -1107,7 +1119,11 @@ void ID()
 /************************************************************/
 void IF()
 {
-	NEXT_STATE.PC = CURRENT_STATE.PC;
+	if(BRANCH_FLAG == 1) {
+		BRANCH_FLAG = 0;
+		CURRENT_STATE.PC = NEXT_STATE.PC;
+		printf("\n\nBranch taken: IF");
+	}
 	if(STALL_COUNT == 0) {
 		IF_ID.IR = mem_read_32(CURRENT_STATE.PC);
 		IF_ID.PC = CURRENT_STATE.PC;
