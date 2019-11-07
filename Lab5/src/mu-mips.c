@@ -445,6 +445,7 @@ void EX()
 		uint32_t instruction = ID_EX.IR;
 		uint32_t opcode = (instruction & 0xFC000000) >> 26;
 		uint32_t function = instruction & 0x0000003F;
+		uint64_t product;
 
 		EX_MEM.D = ID_EX.D;
 		EX_MEM.IR = ID_EX.IR;
@@ -473,12 +474,15 @@ void EX()
 				case 0x08: //JR
 					NEXT_STATE.PC = ID_EX.A;
 					BRANCH_FLAG = 1;
+					printf("jr pc: %x", NEXT_STATE.PC);
 					 
 					break;
 				case 0x09: //JALR
 					EX_MEM.ALUOutput = CURRENT_STATE.PC + 4;
+					NEXT_STATE.REGS[31] = CURRENT_STATE.PC + 4;
 					NEXT_STATE.PC    = ID_EX.A;
 					BRANCH_FLAG = 1;
+					printf("jalr pc: %x", NEXT_STATE.PC);
 					 
 					break;
 				case 0x0C: //SYSCALL
@@ -497,7 +501,7 @@ void EX()
 					NEXT_STATE.LO = ID_EX.A;
 					break;
 				case 0x18: //MULT
-					; uint32_t p1,p2,product;
+					; uint32_t p1,p2;
 					if ((ID_EX.A & 0x80000000) == 0x80000000){
 						p1 = 0xFFFFFFFF00000000 | ID_EX.A;
 					}else{
@@ -600,6 +604,7 @@ void EX()
 					break;
 				case 0x02: //J
 					NEXT_STATE.PC = (ID_EX.PC & 0xF0000000) | (ID_EX.target << 2);
+					printf("j pc: %x", NEXT_STATE.PC);
 					BRANCH_FLAG = 1;
 					STALL_COUNT = 1;
 					 
@@ -609,6 +614,7 @@ void EX()
 					NEXT_STATE.REGS[31] = CURRENT_STATE.PC + 4;
 					BRANCH_FLAG = 1;
 					STALL_COUNT = 1;
+					printf("jal pc: %x", NEXT_STATE.PC);
 					 
 					break;
 				case 0x04: //BEQ
@@ -717,10 +723,25 @@ void ID()
 
 
 	if(ID_FLAG == 1) {
-		if(STALL_COUNT > 0) {
-			;
-		} else if(BRANCH_FLAG == 1) {
-			;
+		if(BRANCH_FLAG == 1) {
+			
+			ID_EX.IR = 0;
+			ID_EX.A  = 0;
+			ID_EX.B  = 0;
+			ID_EX.D  = 0;
+			ID_EX.rs = 0;
+			ID_EX.rt = 0;
+			ID_EX.rd = 0;
+			ID_EX.imm= 0;
+		} else if(STALL_COUNT > 0) {
+			ID_EX.IR = 0;
+			ID_EX.A  = 0;
+			ID_EX.B  = 0;
+			ID_EX.D  = 0;
+			ID_EX.rs = 0;
+			ID_EX.rt = 0;
+			ID_EX.rd = 0;
+			ID_EX.imm= 0;
 		} else {
 			uint32_t instruction, opcode, function, rs, rt, rd, sa, immediate, target;
 			uint64_t product, p1, p2;
@@ -1105,6 +1126,12 @@ void ID()
 				} else {
 					MEM_HAZARD = 0;
 				}
+
+				if(opcode == 0x00 && function == 0x0c && EX_MEM.rd == 2) {
+					STALL_COUNT = 2;
+					EX_HAZARD = 1;
+					ID_EX = Empty;
+				}
 			}
 
 			if(STALL_COUNT == 0) {
@@ -1122,6 +1149,8 @@ void IF()
 	if(BRANCH_FLAG == 1) {
 		BRANCH_FLAG = 0;
 		CURRENT_STATE.PC = NEXT_STATE.PC;
+		IF_ID.IR = mem_read_32(CURRENT_STATE.PC);
+		NEXT_STATE.PC = CURRENT_STATE.PC + 4;
 		printf("\n\nBranch taken: IF");
 	}
 	if(STALL_COUNT == 0) {
