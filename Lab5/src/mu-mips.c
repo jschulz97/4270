@@ -477,16 +477,14 @@ void EX()
 				case 0x08: //JR
 					NEXT_STATE.PC = ID_EX.A;
 					BRANCH_FLAG = 1;
-					printf("jr pc: %x", NEXT_STATE.PC);
-					 
+					//printf("jr pc: %x", NEXT_STATE.PC); 
 					break;
 				case 0x09: //JALR
 					EX_MEM.ALUOutput 	= ID_EX.PC + 4;
 					NEXT_STATE.REGS[31] = ID_EX.PC + 4;
 					NEXT_STATE.PC    	= ID_EX.A;
 					BRANCH_FLAG = 1;
-					printf("jalr pc: %x", NEXT_STATE.PC);
-					 
+					//printf("jalr pc: %x", NEXT_STATE.PC);					 
 					break;
 				case 0x0C: //SYSCALL
 					EX_MEM.ALUOutput = CURRENT_STATE.REGS[2];
@@ -607,18 +605,16 @@ void EX()
 					break;
 				case 0x02: //J
 					NEXT_STATE.PC = (ID_EX.PC & 0xF0000000) | (ID_EX.target << 2);
-					printf("j pc: %x", NEXT_STATE.PC);
+					//printf("j pc: %x", NEXT_STATE.PC);
 					BRANCH_FLAG = 1;
 					STALL_COUNT = 1;
-					 
 					break;
 				case 0x03: //JAL
 					NEXT_STATE.PC = (ID_EX.PC & 0xF0000000) | (ID_EX.target << 2);
 					NEXT_STATE.REGS[31] = ID_EX.PC + 4;
 					BRANCH_FLAG = 1;
 					STALL_COUNT = 1;
-					printf("jal pc: %x", NEXT_STATE.PC);
-					 
+					//printf("jal pc: %x", NEXT_STATE.PC);
 					break;
 				case 0x04: //BEQ
 					if(ID_EX.A == ID_EX.B){
@@ -626,7 +622,6 @@ void EX()
 						BRANCH_FLAG = 1;
 					}
 					STALL_COUNT = 1;
-					 
 					break;
 				case 0x05: //BNE
 					if(ID_EX.A != ID_EX.B){
@@ -642,7 +637,6 @@ void EX()
 						BRANCH_FLAG = 1;
 					}
 					STALL_COUNT = 1;
-					 
 					break;
 				case 0x07: //BGTZ
 					if((ID_EX.A & 0x80000000) == 0x0 || ID_EX.A != 0){
@@ -650,7 +644,6 @@ void EX()
 						BRANCH_FLAG = 1;
 					}
 					STALL_COUNT = 1;
-					 
 					break;
 				case 0x08: //ADDI
 					EX_MEM.ALUOutput = ID_EX.A + ID_EX.imm;
@@ -1154,14 +1147,14 @@ void IF()
 		CURRENT_STATE.PC = NEXT_STATE.PC;
 		IF_ID.IR = mem_read_32(CURRENT_STATE.PC);
 		NEXT_STATE.PC = CURRENT_STATE.PC + 4;
-		printf("\n\nBranch taken: IF");
+		printf("\nBranch taken");
 	}
 	if(STALL_COUNT == 0) {
 		IF_ID.IR = mem_read_32(CURRENT_STATE.PC);
 		IF_ID.PC = CURRENT_STATE.PC;
 		NEXT_STATE.PC = IF_ID.PC + 4;
 	} else {
-		printf("\n\nStalling!\n");
+		printf("\nStalling!");
 	}
 	ID_FLAG = 1;
 	STALL_COUNT--;
@@ -1228,7 +1221,6 @@ void print_program(){
 	for(i=0; i<PROGRAM_SIZE; i++){
 		addr = MEM_TEXT_BEGIN + (i*4);
 		printf("[0x%x]\t", addr);
-		//printf("\n%x",addr);
 		print_instruction(addr);
 	}
 }
