@@ -821,7 +821,7 @@ void ID()
 					case 0x12: //MFLO
 						ID_EX.A 	= CURRENT_STATE.REGS[rs];
 						ID_EX.B 	= CURRENT_STATE.REGS[rt];
-						ID_EX.D 	=rd;
+						ID_EX.D 	= rd;
 						break;
 					case 0x13: //MTLO
 						ID_EX.A 	= CURRENT_STATE.REGS[rs];
