@@ -420,9 +420,11 @@ void MEM()
 				break;
 			case 0x80: //LB
 				MEM_WB.LMD = mem_read_32(MEM_WB.ALUOutput) & 0x000000FF;
+				MEM_WB.LMD = ((MEM_WB.LMD) & 0x80) > 0 ? (MEM_WB.LMD | 0xFFFFFF00) : (MEM_WB.LMD & 0x000000FF);
 				break;
 			case 0x84: //LH
 				MEM_WB.LMD = mem_read_32(MEM_WB.ALUOutput) & 0x0000FFFF;
+				MEM_WB.LMD = ((MEM_WB.LMD) & 0x8000) > 0 ? (MEM_WB.LMD | 0xFFFF0000) : (MEM_WB.LMD & 0x0000FFFF);
 				break;
 			case 0x8C: //LW
 				MEM_WB.LMD = mem_read_32(MEM_WB.ALUOutput);
@@ -448,6 +450,7 @@ void EX()
 		uint64_t product;
 
 		EX_MEM.D = ID_EX.D;
+		EX_MEM.PC = ID_EX.PC;
 		EX_MEM.IR = ID_EX.IR;
 		EX_MEM.rs = ID_EX.rs;
 		EX_MEM.rd = ID_EX.rd;
@@ -478,9 +481,9 @@ void EX()
 					 
 					break;
 				case 0x09: //JALR
-					EX_MEM.ALUOutput = CURRENT_STATE.PC + 4;
-					NEXT_STATE.REGS[31] = CURRENT_STATE.PC + 4;
-					NEXT_STATE.PC    = ID_EX.A;
+					EX_MEM.ALUOutput 	= ID_EX.PC + 4;
+					NEXT_STATE.REGS[31] = ID_EX.PC + 4;
+					NEXT_STATE.PC    	= ID_EX.A;
 					BRANCH_FLAG = 1;
 					printf("jalr pc: %x", NEXT_STATE.PC);
 					 
@@ -611,7 +614,7 @@ void EX()
 					break;
 				case 0x03: //JAL
 					NEXT_STATE.PC = (ID_EX.PC & 0xF0000000) | (ID_EX.target << 2);
-					NEXT_STATE.REGS[31] = CURRENT_STATE.PC + 4;
+					NEXT_STATE.REGS[31] = ID_EX.PC + 4;
 					BRANCH_FLAG = 1;
 					STALL_COUNT = 1;
 					printf("jal pc: %x", NEXT_STATE.PC);
