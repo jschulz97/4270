@@ -430,22 +430,27 @@ void MEM()
 				uint32_t boff  = EX_MEM.ALUOutput & 0x00000003;
 
 				//if cache hit
-				if(Cache.blocks[index].tag == tag) {
+				if(Cache.blocks[index].valid == 1 && Cache.blocks[index].tag == tag) {
 					MEM_WB.LMD = Cache.blocks[index].words[woff] & mask;
 					cache_hits += 1;
 				} else {
 					//if cache miss
 					//Get from mem
-					Cache.blocks[index].words[0] = mem_read_32(EX_MEM.ALUOutput & mask);
-					Cache.blocks[index].words[1] = mem_read_32(EX_MEM.ALUOutput & mask);
-					Cache.blocks[index].words[2] = mem_read_32(EX_MEM.ALUOutput & mask);
-					Cache.blocks[index].words[3] = mem_read_32(EX_MEM.ALUOutput & mask);
+					uint32_t start_addr = EX_MEM.ALUOutput & 0xFFFFFFFC;
+
+					Cache.blocks[index].words[0] = mem_read_32(start_addr + 0);
+					Cache.blocks[index].words[1] = mem_read_32(start_addr + 4);
+					Cache.blocks[index].words[2] = mem_read_32(EX_MEM.ALUOutput);
+					Cache.blocks[index].words[3] = mem_read_32(EX_MEM.ALUOutput);
 
 					//update tag
 					Cache.blocks[index].tag = tag;
 
 					//update valid
 					Cache.blocks[index].valid = 1;
+
+					//Get MLD
+					MEM_WB.LMD = Cache.blocks[index].words[woff] & mask;
 
 					cache_misses += 1;
 				}
@@ -460,23 +465,38 @@ void MEM()
 				uint32_t boff  = EX_MEM.ALUOutput & 0x00000003;
 
 				//if cache hit
-				if(Cache.blocks[index].tag == tag) {
-					//MEM_WB.LMD = Cache.blocks[index].words[woff];
+				if(Cache.blocks[index].valid == 1 && Cache.blocks[index].tag == tag) {
 					Cache.blocks[index].words[woff] =  EX_MEM.D;
 					cache_hits += 1;
+
+					//Place in write buffer
 				} else {
 					//if cache miss
 					//Get from mem
-					Cache.blocks[index].words[0] = mem_read_32(EX_MEM.ALUOutput);
-					Cache.blocks[index].words[1] = mem_read_32(EX_MEM.ALUOutput);
-					Cache.blocks[index].words[2] = mem_read_32(EX_MEM.ALUOutput);
-					Cache.blocks[index].words[3] = mem_read_32(EX_MEM.ALUOutput);
+					Cache.blocks[index].words[0] = mem_read_32(EX_MEM.ALUOutput) & 0x000000FF;
+					Cache.blocks[index].words[1] = mem_read_32(EX_MEM.ALUOutput) & 0x0000FF00;
+					Cache.blocks[index].words[2] = mem_read_32(EX_MEM.ALUOutput) & 0x00FF0000;
+					Cache.blocks[index].words[3] = mem_read_32(EX_MEM.ALUOutput) & 0xFF000000;
 
 					//update tag
 					Cache.blocks[index].tag = tag;
 
 					//update valid
 					Cache.blocks[index].valid = 1;
+
+					//Update cache
+					Cache.blocks[index].words[woff] =  EX_MEM.D;
+
+					//Place in write buffer
+					WRITE_BUFFER[0] = Cache.blocks[index].words[0];
+					WRITE_BUFFER[1] = Cache.blocks[index].words[1];
+					WRITE_BUFFER[2] = Cache.blocks[index].words[2];
+					WRITE_BUFFER[3] = Cache.blocks[index].words[3];
+
+					uint32_t temp = ( WRITE_BUFFER[3] << 24 ) | ( WRITE_BUFFER[2] << 16 ) | ( WRITE_BUFFER[1] << 8 ) | ( WRITE_BUFFER[0] );
+
+					//update memory
+					mem_write_32(EX_MEM.ALUOutput,temp);
 
 					cache_misses += 1;
 				}
@@ -488,7 +508,6 @@ void MEM()
 			}
 		}
 	}
-
 
 
 	// if(MEM_FLAG == 1) {

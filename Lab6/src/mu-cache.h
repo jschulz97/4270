@@ -11,8 +11,8 @@ typedef struct CacheBlock_Struct {
   uint32_t tag; //this field should contain the tag, i.e. the high-order 32 - (2+2+4)  = 24 bits
   uint32_t words[WORD_PER_BLOCK]; //this is where actual data is stored. Each word is 4-byte long, and each cache block contains 4 blocks.
   
-  
 } CacheBlock;
+
 
 typedef struct Cache_Struct {
 
@@ -20,7 +20,8 @@ typedef struct Cache_Struct {
   
 } Cache;
 
-
+//Write buffer
+uint32_t WRITE_BUFFER[4];
 
 /***************************************************************/
 /* CACHE STATS                                                 */
