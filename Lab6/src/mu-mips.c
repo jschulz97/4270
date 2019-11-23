@@ -248,6 +248,9 @@ void handle_command() {
 			}
 			ENABLE_FORWARDING == 0 ? printf("Forwarding OFF\n") : printf("Forwarding ON\n");
 			break;
+		case 'c':
+			view_cache();
+			break;
 		default:
 			printf("Invalid Command.\n");
 			break;
@@ -326,6 +329,15 @@ void load_program() {
 }
 
 
+void view_cache() {
+	printf("\n");
+	printf("Hits: %d Misses: %d",cache_hits, cache_misses);
+	for(int i=0; i<16; i++) {	
+		printf("\nBlock: %2d | Tag: %8x | %8x  %8x  %8x  %8x", i, L1Cache.blocks[i].tag, L1Cache.blocks[i].words[0], L1Cache.blocks[i].words[1], L1Cache.blocks[i].words[2], L1Cache.blocks[i].words[3]);
+	}
+}
+
+
 /************************************************************/
 /* maintain the pipeline            */ 
 /************************************************************/
@@ -379,6 +391,7 @@ void WB()
 
 				break;
 			default: //I Type
+				printf("\ndefault in WB %x %x",MEM_WB.D, MEM_WB.ALUOutput);
 				NEXT_STATE.REGS[MEM_WB.D] = MEM_WB.ALUOutput;
 				break;
 		}
@@ -409,6 +422,7 @@ void MEM()
 			MEM_WB.rd = EX_MEM.rd;
 			MEM_WB.rt = EX_MEM.rt;
 			MEM_WB.RegWrite = EX_MEM.RegWrite;
+			printf("\nMEM %x %x",MEM_WB.D, MEM_WB.ALUOutput);
 
 			//If load instr
 			if(opcode == 0x80 || opcode == 0x84 || opcode == 0x8C) {
@@ -424,34 +438,36 @@ void MEM()
 				}
 
 				//break up addr
-				uint32_t index = EX_MEM.ALUOutput & 0x000000F0;
-				uint32_t tag   = EX_MEM.ALUOutput & 0xFFFFFF00;
-				uint32_t woff  = EX_MEM.ALUOutput & 0x0000000C;
-				uint32_t boff  = EX_MEM.ALUOutput & 0x00000003;
+				uint32_t index = (EX_MEM.ALUOutput & 0x000000F0) >> 4;
+				uint32_t tag   = (EX_MEM.ALUOutput & 0xFFFFFF00) >> 8;
+				uint32_t woff  = (EX_MEM.ALUOutput & 0x0000000C) >> 2;
+				uint32_t boff  = (EX_MEM.ALUOutput & 0x00000003);
 
-				//if cache hit
-				if(Cache.blocks[index].valid == 1 && Cache.blocks[index].tag == tag) {
-					MEM_WB.LMD = Cache.blocks[index].words[woff] & mask;
+				//if L1Cache hit
+				if(L1Cache.blocks[index].valid == 1 && L1Cache.blocks[index].tag == tag) {
+					MEM_WB.LMD = L1Cache.blocks[index].words[woff] & mask;
 					cache_hits += 1;
 				} else {
-					//if cache miss
+					//if L1Cache miss
 					//Get from mem
 					uint32_t start_addr = EX_MEM.ALUOutput & 0xFFFFFFFC;
 
-					Cache.blocks[index].words[0] = mem_read_32(start_addr + 0);
-					Cache.blocks[index].words[1] = mem_read_32(start_addr + 4);
-					Cache.blocks[index].words[2] = mem_read_32(EX_MEM.ALUOutput);
-					Cache.blocks[index].words[3] = mem_read_32(EX_MEM.ALUOutput);
+					L1Cache.blocks[index].words[0] = mem_read_32((start_addr & 0xFFFFFFF0));
+					L1Cache.blocks[index].words[1] = mem_read_32((start_addr & 0xFFFFFFF0) + 4);
+					L1Cache.blocks[index].words[2] = mem_read_32((start_addr & 0xFFFFFFF0) + 8);
+					L1Cache.blocks[index].words[3] = mem_read_32((start_addr & 0xFFFFFFF0) + 12);
 
 					//update tag
-					Cache.blocks[index].tag = tag;
+					L1Cache.blocks[index].tag = tag;
 
 					//update valid
-					Cache.blocks[index].valid = 1;
+					L1Cache.blocks[index].valid = 1;
 
-					//Get MLD
-					MEM_WB.LMD = Cache.blocks[index].words[woff] & mask;
+					//Get LMD
+					MEM_WB.LMD = L1Cache.blocks[index].words[woff] & mask;
 
+					MEM_STALL = 100;
+					EX_MEM  = Empty;
 					cache_misses += 1;
 				}
 			} 
@@ -459,45 +475,74 @@ void MEM()
 			else if(opcode == 0xA0 || opcode == 0xA4 || opcode == 0xAC) {
 
 				//break up addr
-				uint32_t index = EX_MEM.ALUOutput & 0x000000F0;
-				uint32_t tag   = EX_MEM.ALUOutput & 0xFFFFFF00;
-				uint32_t woff  = EX_MEM.ALUOutput & 0x0000000C;
-				uint32_t boff  = EX_MEM.ALUOutput & 0x00000003;
+				uint32_t index = (EX_MEM.ALUOutput & 0x000000F0) >> 4;
+				uint32_t tag   = (EX_MEM.ALUOutput & 0xFFFFFF00) >> 8;
+				uint32_t woff  = (EX_MEM.ALUOutput & 0x0000000C) >> 2;
+				uint32_t boff  = (EX_MEM.ALUOutput & 0x00000003);
 
-				//if cache hit
-				if(Cache.blocks[index].valid == 1 && Cache.blocks[index].tag == tag) {
-					Cache.blocks[index].words[woff] =  EX_MEM.D;
-					cache_hits += 1;
-
+				//if L1Cache hit
+				if(L1Cache.blocks[index].valid == 1 && L1Cache.blocks[index].tag == tag) {
+					L1Cache.blocks[index].words[woff] =  EX_MEM.D;
+					printf("\nwoff: %x",woff);
 					//Place in write buffer
-				} else {
-					//if cache miss
-					//Get from mem
-					Cache.blocks[index].words[0] = mem_read_32(EX_MEM.ALUOutput) & 0x000000FF;
-					Cache.blocks[index].words[1] = mem_read_32(EX_MEM.ALUOutput) & 0x0000FF00;
-					Cache.blocks[index].words[2] = mem_read_32(EX_MEM.ALUOutput) & 0x00FF0000;
-					Cache.blocks[index].words[3] = mem_read_32(EX_MEM.ALUOutput) & 0xFF000000;
-
-					//update tag
-					Cache.blocks[index].tag = tag;
-
-					//update valid
-					Cache.blocks[index].valid = 1;
-
-					//Update cache
-					Cache.blocks[index].words[woff] =  EX_MEM.D;
-
-					//Place in write buffer
-					WRITE_BUFFER[0] = Cache.blocks[index].words[0];
-					WRITE_BUFFER[1] = Cache.blocks[index].words[1];
-					WRITE_BUFFER[2] = Cache.blocks[index].words[2];
-					WRITE_BUFFER[3] = Cache.blocks[index].words[3];
-
-					uint32_t temp = ( WRITE_BUFFER[3] << 24 ) | ( WRITE_BUFFER[2] << 16 ) | ( WRITE_BUFFER[1] << 8 ) | ( WRITE_BUFFER[0] );
+					WRITE_BUFFER[0] = L1Cache.blocks[index].words[0];
+					WRITE_BUFFER[1] = L1Cache.blocks[index].words[1];
+					WRITE_BUFFER[2] = L1Cache.blocks[index].words[2];
+					WRITE_BUFFER[3] = L1Cache.blocks[index].words[3];
 
 					//update memory
-					mem_write_32(EX_MEM.ALUOutput,temp);
+					mem_write_32((EX_MEM.ALUOutput & 0xFFFFFFF0),WRITE_BUFFER[0]);
+					mem_write_32((EX_MEM.ALUOutput & 0xFFFFFFF0) + 4,WRITE_BUFFER[1]);
+					mem_write_32((EX_MEM.ALUOutput & 0xFFFFFFF0) + 8,WRITE_BUFFER[2]);
+					mem_write_32((EX_MEM.ALUOutput & 0xFFFFFFF0) + 12,WRITE_BUFFER[3]);
 
+					//Clear Write Buffer
+					WRITE_BUFFER[0] = 0x0;
+					WRITE_BUFFER[1] = 0x0;
+					WRITE_BUFFER[2] = 0x0;
+					WRITE_BUFFER[3] = 0x0;
+
+					cache_hits += 1;
+				} else {
+					//if L1Cache miss
+					//Get from mem
+					uint32_t start_addr = EX_MEM.ALUOutput & 0xFFFFFFFC;
+
+					L1Cache.blocks[index].words[0] = mem_read_32((start_addr & 0xFFFFFFF0));
+					L1Cache.blocks[index].words[1] = mem_read_32((start_addr & 0xFFFFFFF0) + 4);
+					L1Cache.blocks[index].words[2] = mem_read_32((start_addr & 0xFFFFFFF0) + 8);
+					L1Cache.blocks[index].words[3] = mem_read_32((start_addr & 0xFFFFFFF0) + 12);
+
+					//update tag
+					L1Cache.blocks[index].tag = tag;
+
+					//update valid
+					L1Cache.blocks[index].valid = 1;
+
+					//Update L1Cache
+					L1Cache.blocks[index].words[woff] =  EX_MEM.D;
+
+					//Place in write buffer
+					WRITE_BUFFER[0] = L1Cache.blocks[index].words[0];
+					WRITE_BUFFER[1] = L1Cache.blocks[index].words[1];
+					WRITE_BUFFER[2] = L1Cache.blocks[index].words[2];
+					WRITE_BUFFER[3] = L1Cache.blocks[index].words[3];
+
+					//update memory
+					printf("\nALUOutput: %x\n Write Buffer: %x", EX_MEM.ALUOutput & 0xFFFFFFF0, WRITE_BUFFER[0]);
+					mem_write_32((EX_MEM.ALUOutput & 0xFFFFFFF0),WRITE_BUFFER[0]);
+					mem_write_32((EX_MEM.ALUOutput & 0xFFFFFFF0) + 4,WRITE_BUFFER[1]);
+					mem_write_32((EX_MEM.ALUOutput & 0xFFFFFFF0) + 8,WRITE_BUFFER[2]);
+					mem_write_32((EX_MEM.ALUOutput & 0xFFFFFFF0) + 12,WRITE_BUFFER[3]);
+
+					//Clear Write Buffer
+					WRITE_BUFFER[0] = 0x0;
+					WRITE_BUFFER[1] = 0x0;
+					WRITE_BUFFER[2] = 0x0;
+					WRITE_BUFFER[3] = 0x0;
+
+					MEM_STALL = 100;
+					EX_MEM  = Empty;
 					cache_misses += 1;
 				}
 			}
@@ -507,6 +552,7 @@ void MEM()
 				MEM_WB = Empty;
 			}
 		}
+		WB_FLAG = 1;
 	}
 
 
@@ -562,7 +608,7 @@ void MEM()
 /************************************************************/
 void EX()
 {
-	if(EX_FLAG == 1 and MEM_STALL == 0) {
+	if(EX_FLAG == 1 && MEM_STALL == 0) {
 		uint32_t instruction = ID_EX.IR;
 		uint32_t opcode = (instruction & 0xFC000000) >> 26;
 		uint32_t function = instruction & 0x0000003F;
@@ -835,7 +881,7 @@ void EX()
 /************************************************************/
 void ID()
 {
-	if(ID_FLAG == 1 and MEM_STALL == 0) {
+	if(ID_FLAG == 1 && MEM_STALL == 0) {
 		if(BRANCH_FLAG == 1) {
 			
 			ID_EX.IR = 0;
@@ -1280,7 +1326,7 @@ void IF()
 			STALL_COUNT = 0;
 		}
 	} else {
-		printf("\nMem Stall");
+		printf("\nMEM STALL: %d",MEM_STALL);
 	}
 }
 
