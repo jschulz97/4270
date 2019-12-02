@@ -554,53 +554,6 @@ void MEM()
 		}
 		WB_FLAG = 1;
 	}
-
-
-	// if(MEM_FLAG == 1) {
-	// 	uint32_t instruction = EX_MEM.IR;
-	// 	uint32_t opcode = (instruction & 0xFC000000) >> 24;
-	// 	uint32_t function = instruction & 0x0000003F;
-	// 	MEM_WB.IR = EX_MEM.IR;
-	// 	MEM_WB.D  = EX_MEM.D;
-	// 	MEM_WB.B  = EX_MEM.B;
-	// 	MEM_WB.A  = EX_MEM.A;
-	// 	MEM_WB.ALUOutput = EX_MEM.ALUOutput;
-	// 	MEM_WB.rs = EX_MEM.rs;
-	// 	MEM_WB.rd = EX_MEM.rd;
-	// 	MEM_WB.rt = EX_MEM.rt;
-	// 	MEM_WB.RegWrite = EX_MEM.RegWrite;
-
-	// 	switch(opcode) {
-	// 		case 0xA0: //SB
-	// 			MEM_WB.D =  MEM_WB.D & 0x000000FF;
-	// 			mem_write_32(MEM_WB.ALUOutput,MEM_WB.D);
-	// 			break;
-	// 		case 0xA4: //SH
-	// 			MEM_WB.D = MEM_WB.D & 0x0000FFFF;
-	// 			mem_write_32(MEM_WB.ALUOutput,MEM_WB.D);
-	// 			break;
-	// 		case 0xAC: //SW
-	// 			//MEM_WB.D = MEM_WB.D;
-	// 			mem_write_32(MEM_WB.ALUOutput,MEM_WB.D);
-	// 			break;
-	// 		case 0x80: //LB
-	// 			MEM_WB.LMD = mem_read_32(MEM_WB.ALUOutput) & 0x000000FF;
-	// 			MEM_WB.LMD = ((MEM_WB.LMD) & 0x80) > 0 ? (MEM_WB.LMD | 0xFFFFFF00) : (MEM_WB.LMD & 0x000000FF);
-	// 			break;
-	// 		case 0x84: //LH
-	// 			MEM_WB.LMD = mem_read_32(MEM_WB.ALUOutput) & 0x0000FFFF;
-	// 			MEM_WB.LMD = ((MEM_WB.LMD) & 0x8000) > 0 ? (MEM_WB.LMD | 0xFFFF0000) : (MEM_WB.LMD & 0x0000FFFF);
-	// 			break;
-	// 		case 0x8C: //LW
-	// 			MEM_WB.LMD = mem_read_32(MEM_WB.ALUOutput);
-	// 			break;
-	// 		default:
-	// 			break;
-	// 	}
-
-
-	// 	WB_FLAG = 1;
-	// }
 }
 
 /************************************************************/
