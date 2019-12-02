@@ -391,7 +391,6 @@ void WB()
 
 				break;
 			default: //I Type
-				printf("\ndefault in WB %x %x",MEM_WB.D, MEM_WB.ALUOutput);
 				NEXT_STATE.REGS[MEM_WB.D] = MEM_WB.ALUOutput;
 				break;
 		}
@@ -422,7 +421,6 @@ void MEM()
 			MEM_WB.rd = EX_MEM.rd;
 			MEM_WB.rt = EX_MEM.rt;
 			MEM_WB.RegWrite = EX_MEM.RegWrite;
-			printf("\nMEM %x %x",MEM_WB.D, MEM_WB.ALUOutput);
 
 			//If load instr
 			if(opcode == 0x80 || opcode == 0x84 || opcode == 0x8C) {
@@ -483,7 +481,6 @@ void MEM()
 				//if L1Cache hit
 				if(L1Cache.blocks[index].valid == 1 && L1Cache.blocks[index].tag == tag) {
 					L1Cache.blocks[index].words[woff] =  EX_MEM.D;
-					printf("\nwoff: %x",woff);
 					//Place in write buffer
 					WRITE_BUFFER[0] = L1Cache.blocks[index].words[0];
 					WRITE_BUFFER[1] = L1Cache.blocks[index].words[1];
@@ -529,7 +526,6 @@ void MEM()
 					WRITE_BUFFER[3] = L1Cache.blocks[index].words[3];
 
 					//update memory
-					printf("\nALUOutput: %x\n Write Buffer: %x", EX_MEM.ALUOutput & 0xFFFFFFF0, WRITE_BUFFER[0]);
 					mem_write_32((EX_MEM.ALUOutput & 0xFFFFFFF0),WRITE_BUFFER[0]);
 					mem_write_32((EX_MEM.ALUOutput & 0xFFFFFFF0) + 4,WRITE_BUFFER[1]);
 					mem_write_32((EX_MEM.ALUOutput & 0xFFFFFFF0) + 8,WRITE_BUFFER[2]);
